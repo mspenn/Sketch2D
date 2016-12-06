@@ -64,8 +64,8 @@ struct RecognizedSprite
 	}
 
 	DollarRecognizer::RecognitionResult _result;	// recognize result given by dollar recognizer
-	DrawableSprite* _drawNode;						// a pointer to a target drawable sprite object
-	int _priority;									// priority
+	DrawableSprite*						_drawNode;	// a pointer to a target drawable sprite object
+	int									_priority;	// priority
 };
 
 struct RecognizedSpriteLessCmp

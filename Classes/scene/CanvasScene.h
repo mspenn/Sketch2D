@@ -19,128 +19,302 @@ class ToolLayer;
 #define EVENT_SIMULATE_STOP				"onSimulateStop"
 #define EVENT_TOGGLE_PHYSICS_DEBUG_MODE	"onTogglePhysicsDebugMode"
 
+/**
+ * Canvas/Game Scene
+ * @see cocos2d::Scene
+ */
 class CanvasScene : public cocos2d::Scene
 {
 public:
+
+	// Constructor
 	CanvasScene();
 
+	/**
+	 * Call when Canvas Scene inititialized, override
+	 * @see cocos2d::Node::init
+	 */
 	virtual bool init();
+
+	/**
+	 * Call when Canvas Scene enters the 'stage', override
+	 * @see cocos2d::Node::onEnter
+	 */
 	virtual void onEnter();
+
+	/**
+	 * Call when Canvas Scene exits the 'stage', override
+	 * @see cocos2d::Node::onEnter
+	 */
 	virtual void onExit();
-	// a selector callback
+
+	/**
+	 * Start simulating game
+	 */
 	void startSimulate();
+
+	/**
+ 	 * Stop simulating game
+	 */
 	void stopSimulate();
-	//void menuCloseCallback(cocos2d::Ref* pSender);
 	
+	/**
+	 * Toggle debug view mode
+	 * @return true if debug view mode is on, false otherwise
+	 */
 	bool toggleDebugDraw();
 
-	// implement the "static create()" method manually
+	/**
+	 * Implement the "static create()" method manually
+	 */
 	CREATE_FUNC(CanvasScene);
-	
-protected:
-	cocos2d::Sprite* makeBall(cocos2d::Vec2 point, float radius, cocos2d::PhysicsMaterial material = cocos2d::PHYSICSBODY_MATERIAL_DEFAULT);
-	cocos2d::Sprite* makeBox(cocos2d::Vec2 point, cocos2d::Size size, int color = 0, cocos2d::PhysicsMaterial material = cocos2d::PHYSICSBODY_MATERIAL_DEFAULT);
-	cocos2d::Sprite* makeTriangle(cocos2d::Vec2 point, cocos2d::Size size, int color = 0, cocos2d::PhysicsMaterial material = cocos2d::PHYSICSBODY_MATERIAL_DEFAULT);
 
 private:
-	GameCanvasLayer* _canvasLayer;
-	ToolLayer* _toolLayer;
-	GameLayer* _gameLayer;
+	GameCanvasLayer*				_canvasLayer;		// a pointer to canvas layer
+	ToolLayer*						_toolLayer;			// a pointer to tool layer
+	GameLayer*						_gameLayer;			// a pointer to game layer
 
-	cocos2d::EventListenerKeyboard* _keyboardListener;
+	cocos2d::EventListenerKeyboard* _keyboardListener;	// keyboard listener for user input
 	
-	bool _debugDraw;
+	bool							_debugDraw;			// status for debug view mode, true when debug mode is on, false otherwise 
 };
 
+/**
+ * Game Canvas Layer
+ * You can draw things in this layer 
+ * @see CanvasLayer
+ */
 class GameCanvasLayer :public CanvasLayer
 {
 public:
+	
+	// Constructor
 	GameCanvasLayer() :_jointMode(false){}
+	
+	/**
+	 * Call when GameCanvasLayer inititialized, override
+	 * @see cocos2d::Node::init
+	 */
 	virtual bool init();
+
+	/**
+	 * Call when GameCanvasLayer enters the 'stage', override
+	 * @see cocos2d::Node::onEnter
+	 */
 	virtual void onEnter();
+	
+	/**
+	 * Call when GameCanvasLayer exits the 'stage', override
+	 * @see cocos2d::Node::onEnter
+	 */
 	virtual void onExit();
+
+	/**
+	 * Called whe mouse down, override
+	 * @see CanvasLaye::ronMouseDown
+	 */
 	virtual void onMouseDown(cocos2d::EventMouse* event);
-	void save();
+
+	/**
+	 * Recognize shape
+	 */
 	void recognize();
+
+	/**
+	 * Redraw Current Shape
+	 */
 	void redrawCurrentNode();
-	void train();
+
+	/**
+	 * Remove sprite if it's unrecognized
+	 * @param target	a pointer to existing sprite
+	 */
 	void removeUnrecognizedSprite(DrawableSprite* target);
+
+	/**
+	 * Start game simulation
+	 */
 	void startGameSimulation();
+	
+	/**
+	 * Stop game simulation
+	 */
 	void stopGameSimulation();
+
+	/**
+	 * Switch to wew draw node
+	 * @return a pointer to new draw node
+	 * @see DrawableSprite
+	 */
 	DrawableSprite* switchToNewDrawNode();
+	
+	/**
+	 * Create game simulation layer
+	 * @return a pointer to GameLayer instance, auto release object
+	 */
 	GameLayer* createGameLayer();
+	
+	/**
+	 * Implement the "static create()" method manually
+	 */
 	CREATE_FUNC(GameCanvasLayer);
+
 private:
-	bool _jointMode;
-	std::list<DrawableSprite*> _drawNodeList;
-	DrawSpriteResultMap _drawNodeResultMap;
+	bool						_jointMode;			// status for joint draw mode, true joint draw mode is on, false otherwise
 
-	GeometricRecognizerNode* _geoRecognizer;
-
-	PreCommandHandlerFactory _preCmdHandlers;
+	std::list<DrawableSprite*>	_drawNodeList;		// current drawn nodes 
+	DrawSpriteResultMap			_drawNodeResultMap;	// DrawableSprite-RecognizedSprite map
+	GeometricRecognizerNode*	_geoRecognizer;		// a pointer to GeometricRecognizerNode
+	PreCommandHandlerFactory	_preCmdHandlers;	// pre-command handlers
 
 };
 
-class PopupLayer : public cocos2d::Layer
-{
-public:
-	virtual bool init();
-	CREATE_FUNC(PopupLayer);
-};
-
+/**
+ * Tool Layer
+ * A container for tool hints, buttons
+ * @see CanvasLayer
+ */
 class ToolLayer : public cocos2d::Layer
 {
 public:
+
+	/**
+	 * Call when ToolLayer inititialized, override
+	 * @see cocos2d::Node::init
+	 */
 	virtual bool init();
+
+	/**
+	 * Call when ToolLayer enters the 'stage', override
+	 * @see cocos2d::Node::onEnter
+	 */
 	virtual void onEnter();
+	
+	/**
+	 * Call when ToolLayer exits the 'stage', override
+	 * @see cocos2d::Node::onEnter
+	 */
 	virtual void onExit();
+
+	/**
+	 * Implement the "static create()" method manually
+	 */
 	CREATE_FUNC(ToolLayer);
 
+	/**
+	 * Event callbacks for startSimulate
+	 * @param pSender	event caller
+	 */
 	void startSimulateCallback(cocos2d::Ref* pSender);
+
+	/**
+	 * Event callbacks for stopSimulate
+	 * @param pSender	event caller
+	 */
 	void stopSimulateCallback(cocos2d::Ref* pSender);
+
+	/**
+	 * Event callbacks for startJointMode, not used now
+	 * @param pSender	event caller
+	 */
 	void startJointModeCallback(cocos2d::Ref* pSender);
+
+	/**
+	 * Event callbacks for stopJointMode, not used now
+	 * @param pSender	event caller
+	 */
 	void stopJointModeCallback(cocos2d::Ref* pSender);
+
+	/**
+	 * Toggle debug mode
+	 * @param isDebug	debug status
+	 */
 	void toggleDebugMode(bool isDebug);
 
-	void setParentScene(CanvasScene* canvasScene){ this->_canvasScene = canvasScene; }
+	/**
+	 * Set parent scene
+	 * @param canvasScene	target parent scene
+	 */
+	void setParentScene(CanvasScene* canvasScene)
+	{
+		this->_canvasScene = canvasScene;
+	}
+
+	/**
+	 * Called when sprite is recognized successfully
+	 * @param event	event argument
+	 * @see cocos2d::EventCustom
+	 */
 	void onRecognizeSuccess(cocos2d::EventCustom* event);
+
+	/**
+	 * Called when sprite is failed to be recognized
+	 * @param event	event argument
+	 * @see cocos2d::EventCustom
+	 */
 	void onRecognizeFailed(cocos2d::EventCustom* event);
+
 private:
-	cocos2d::EventListenerCustom* _recognizeSuccessListener;
-	cocos2d::EventListenerCustom* _recognizeFailedListener;
+	cocos2d::EventListenerCustom*	_recognizeSuccessListener;	// recognize success listener
+	cocos2d::EventListenerCustom*	_recognizeFailedListener;	// recognize failed listener
 
-	cocos2d::Sprite*	_spriteAssistant;
-	cocos2d::Label*	_labelHint;
-	cocos2d::MenuItemImage* _menuStartSimulate;
-	cocos2d::MenuItemImage* _menuStopSimulate;
-	cocos2d::MenuItemImage* _menuStartJoint;
-	cocos2d::MenuItemImage* _menuStopJoint;
-	cocos2d::MenuItemImage* _menuStartDebug;
+	cocos2d::Sprite*				_spriteAssistant;			// assistant sprite
+	cocos2d::Label*					_labelHint;					// tool hint label
+	cocos2d::MenuItemImage*			_menuStartSimulate;			// start simulate menu
+	cocos2d::MenuItemImage*			_menuStopSimulate;			// stop simulate menu
+	cocos2d::MenuItemImage*			_menuStartJoint;			// start joint mode menu, not used now
+	cocos2d::MenuItemImage*			_menuStopJoint;				// start joint mode menu, not used now
+	cocos2d::MenuItemImage*			_menuStartDebug;			// start debug mode menu
 
-	CanvasScene* _canvasScene;
+	CanvasScene*					_canvasScene;				// parent scene	
 };
 
+
+/**
+ * Game Layer
+ * Simulating physics effect
+ * @see cocos2d::Layer
+ */
 class GameLayer : public cocos2d::Layer
 {
 public:
 
+	/**
+	 * Constructor
+	 * @param	current drawn nodes 
+	 * @param	DrawableSprite-RecognizedSprite map
+	 * @see DrawableSprite
+	 * @see DrawSpriteResultMap
+	 */
 	GameLayer(std::list<DrawableSprite*>&, DrawSpriteResultMap&);
-
+	/**
+	 * Call when ToolLayer inititialized, override
+	 * @see cocos2d::Node::init
+	 */
 	virtual bool init();
-
+	
+	/**
+	 * Call when GameLayer enters the 'stage', override
+	 * @see cocos2d::Node::onEnter
+	 */
 	virtual void onEnter();
-
+	
+	/**
+	 * Call when GameLayer exits the 'stage', override
+	 * @see cocos2d::Node::onEnter
+	 */
 	virtual void onExit();
 
+	/**
+	 * Implement the "static create" method manually with non-empty parameters
+	 */
 	static GameLayer *GameLayer::create(list<DrawableSprite*>&, DrawSpriteResultMap&, cocos2d::Scene*);
-	//CREATE_FUNC(GameLayer);
-//	void setDrawNodeList(std::list<DrawableSprite*>*drawNodeList){ this->_drawNodeList = drawNodeList; }
-//	void setDrawNodeResultMap(DrawSpriteResultMap*drawNodeResultMap){ this->_drawNodeResultMap = drawNodeResultMap; }
+
 private:
-	std::list<DrawableSprite*>& _drawNodeList;
-	DrawSpriteResultMap&		_drawNodeResultMap;
-	GenSpriteResultMap			_genSpriteResultMap;
-	PostCommandHandlerFactory	_postCmdHandlers;
+	std::list<DrawableSprite*>& _drawNodeList;			// current drawn nodes 
+	DrawSpriteResultMap&		_drawNodeResultMap;		// DrawableSprite-RecognizedSprite map
+	GenSpriteResultMap			_genSpriteResultMap;	// DrawableSprite-Sprite map, generated sprites, with physics body
+	PostCommandHandlerFactory	_postCmdHandlers;		// post-command handlers
 };
 
 #endif // __CANVAS_SCENE_H__

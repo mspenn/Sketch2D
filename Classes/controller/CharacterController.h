@@ -23,13 +23,6 @@ class CharacterController :public cocos2d::Component
 public:
 
 	/**
-	 * Call when initialized, override
-	 * @return true if initialized successfully, false otherwise.
-	 * @see cocos2d::Component::init
-	 */
-	virtual bool init();
-
-	/**
 	 * Call when CharacterController enter the "stage", override
 	 * @see cocos2d::Component::onEnter
 	 */
@@ -43,9 +36,6 @@ public:
 
 	// Constructor
 	CharacterController();
-
-	// Deconstructor
-	virtual ~CharacterController();
 
 	/**
 	 * Set event dispatcher for scene.

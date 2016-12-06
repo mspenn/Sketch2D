@@ -20,6 +20,8 @@ void CanvasLayer::onEnter()
 
 void CanvasLayer::onMouseDown(EventMouse* event)
 {
+	// if current status is not drawing, mark status as drawing
+	// save first location as current mouse location in view
 	if (!_isDrawing)
 	{
 		_startDrawLocation = convertToNodeSpace(event->getLocationInView());
@@ -41,10 +43,6 @@ void CanvasLayer::onMouseMove(EventMouse* event)
 
 void CanvasLayer::onMouseUp(EventMouse* event)
 {
+	// mark status is not drawing when mouse up
 	_isDrawing = false;
 }
-
-/*void CanvasLayer::onExit()
-{
-	Layer::onExit();
-}*/

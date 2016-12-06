@@ -13,18 +13,39 @@ class DrawableSprite : public cocos2d::DrawNode
 {
 public:
 	DrawableSprite();
-	//virtual bool init();
-	virtual void onEnter();
-	virtual void onExit();
 
-	//void setNodeType(NodeType type){ this->_nodeType = type; }
-	//NodeType getNodeType()const { return this->_nodeType; }
-	void setGeoRecognizer(DollarRecognizer::GeometricRecognizer* grn){ this->_geoRecognizer = grn; }
+	/**
+	 * Set Geometric Recognizer
+	 * @param grn	a pointer to existing GeometricRecognizer instance
+	 * @see DollarRecognizer::GeometricRecognizer
+	 */
+	void setGeoRecognizer(DollarRecognizer::GeometricRecognizer* grn)
+	{
+		this->_geoRecognizer = grn;
+	}
+
+	/**
+	 * Get MultiStrokeGesture from current drawn path
+	 * @param a empty MultiStrokeGesture reference to store current path
+	 */
 	DollarRecognizer::MultiStrokeGesture& getMultiStrokeGesture(DollarRecognizer::MultiStrokeGesture&);
 
+	/**
+	 * Recognize shape
+	 * The average of all the points
+	 */
 	DollarRecognizer::RecognitionResult recognize();
 
+	/**
+	 * Redraw path
+	 */
 	void redraw();
+
+	/**
+	 * Add a line to path
+	 * @param from	a point the line from
+	 * @param to	a point the line to
+	 */
 	void addToPath(cocos2d::Vec2 from, cocos2d::Vec2 to);
 
 	/**
@@ -37,41 +58,114 @@ public:
 	}
 
 	/**
-	* Get Shape Center
-	* The centroid of the rectangle container
-	*/
+	 * Get Shape Center
+	 * The centroid of the rectangle container
+	 */
 	cocos2d::Vec2 getShapeCenter() const
 	{
 		return cocos2d::Vec2((_xMin + _xMax) / 2, (_yMin + _yMax) / 2);
 	}
 
-	const std::vector<cocos2d::Vec2>& getPath() const{ return _path; }
+	/**
+	 * Get Shape Path
+	 * The centroid of the rectangle container
+	 */
+	const std::vector<cocos2d::Vec2>& getPath() const
+	{
+		return _path;
+	}
 
+	/**
+	 * Create Texture from current path
+	 * @return a pointer to Texture2D instance
+	 * @see cocos2d::Texture2D
+	 */
 	cocos2d::Texture2D* createTexture();
-	cocos2d::Rect contentRect()const{ return cocos2d::Rect(_xMin, _yMin, _xMax - _xMin, _yMax - _yMin); }
 
-	void setReferenceSprite(DrawableSprite* ref){ this->_reference = ref; }
-	DrawableSprite* getReferenceSprite()const{ return this->_reference; }
+	/**
+	 * Get Content Rectangle
+	 * @return content rect area
+	 * @see cocos2d::Rect
+	 */
+	cocos2d::Rect contentRect()const
+	{
+		return cocos2d::Rect(_xMin, _yMin, _xMax - _xMin, _yMax - _yMin);
+	}
 
-	bool empty()const{ return this->_path.empty(); }
+	/**
+	 * Set Reference Sprite
+	 * @param ref	a pointer to a existing DrawableSprite instance
+	 */
+	void setReferenceSprite(DrawableSprite* ref)
+	{
+		this->_reference = ref;
+	}
 
-	void setBrushColor(const cocos2d::Color4F& newColor){ this->_brushColor = newColor; }
-	cocos2d::Color4F getBrushColor() const{ return this->_brushColor; }
+	/**
+	 * Get Reference Sprite
+	 * @return	reference sprite
+	 */
+	DrawableSprite* getReferenceSprite() const
+	{
+		return this->_reference;
+	}
+
+	/**
+	 * Check if path is empty
+	 * @return true if path is empty, false otherwise
+	 */
+	bool empty() const
+	{
+		return this->_path.empty();
+	}
+
+	/**
+	 * Set Brush Color
+	 * @param newColor	new color to be set
+	 * @see cocos2d::Color4F
+	 */
+	void setBrushColor(const cocos2d::Color4F& newColor)
+	{
+		this->_brushColor = newColor;
+	}
+
+	/**
+	 * Get Brush Color
+	 * @return brush color
+	 * @see cocos2d::Color4F
+	 */
+	cocos2d::Color4F getBrushColor() const
+	{
+		return this->_brushColor;
+	}
+
+	/**
+	 * If this sprite contains the specified point
+	 * @param point	point to be checked
+	 * @return true if this sprite contains the specified point, false otherwise
+	 */
 	bool containsPoint(const cocos2d::Vec2& point);
-	//bool isSnappedTo(const DrawableSprite& aSprite);
-	// create function
+
+	/**
+	 * Static factory to create DrawableSprite object with non-parameters
+	 */
 	CREATE_FUNC(DrawableSprite);
+
+	/**
+	 * Static factory to create DrawableSprite object with Geometric Recognizer
+	 * @param geometric recognizer reference
+	 * @return DrawableSprite instance
+	 */
 	static DrawableSprite* createWithMultiStrokeGesture(const DollarRecognizer::MultiStrokeGesture&);
 
 private:
 
-	DollarRecognizer::GeometricRecognizer* _geoRecognizer;
-	cocos2d::Vec2 _baryCenter;
-	std::vector<cocos2d::Vec2> _path;
-	float _xMin, _xMax, _yMin, _yMax;
-	//NodeType _nodeType;
-	DrawableSprite* _reference;
-	cocos2d::Color4F _brushColor;
+	DollarRecognizer::GeometricRecognizer*	_geoRecognizer;				// pointer to GeometricRecognizer instance
+	cocos2d::Vec2							_baryCenter;				// bary center of current shape
+	std::vector<cocos2d::Vec2>				_path;						// store shape path
+	float									_xMin, _xMax, _yMin, _yMax;	// content rectangle achors
+	cocos2d::Color4F						_brushColor;				// brush color used to draw shapes
+	DrawableSprite*							_reference;					// not used
 };
 
-#endif
+#endif	/* __DRAWABLE_SPRITE_H__ */

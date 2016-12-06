@@ -11,6 +11,16 @@ class PostCommandHandlerFactory;
 
 typedef std::map<DrawableSprite*, RecognizedSprite> DrawSpriteResultMap;
 typedef std::map<DrawableSprite*, cocos2d::Sprite*> GenSpriteResultMap;
+
+/**
+ * Command handler
+ * @param recSprite		recognized sprite associate with user drawed shapes
+ * @see RecognizedSprite
+ * @param drawNodeList	list of DrawableSprite*, reference to user drawed shapes in screen
+ * @see DrawableSprite
+ * @param owner			recognized sprite owner
+ * @param udata			a pointer to user - defined data
+ */
 typedef std::function<void(RecognizedSprite&, std::list<DrawableSprite*>&, cocos2d::Node*, void*)> CommandHandler;
 
 /**
@@ -87,6 +97,7 @@ public:
 
 	/**
 	 * Default post-handler
+	 * @see CommandHandler
 	 * @param recSprite		recognized sprite associate with user drawed shapes
 	 * @see RecognizedSprite
 	 * @param drawNodeList	list of DrawableSprite*, reference to user drawed shapes in screen

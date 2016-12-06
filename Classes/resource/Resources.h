@@ -15,4 +15,6 @@
 
 #define PAT_GESTURE_FILTER			"gestures/%s/*.ges"
 #define PAT_GESTURE_PATH			"gestures/%s/%s"
+
+#define DEFAULT_FONT				RES_FONT(Marker Felt.ttf)
 #endif

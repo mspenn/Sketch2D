@@ -8,66 +8,15 @@
 USING_NS_CC;
 using namespace DollarRecognizer;
 
-Joints joints;
-JointsList jointsList;
+// gloable join list
+Joints		joints;
+JointsList	jointsList;
 
 namespace
 {
 	const int DRAG_BODYS_TAG = 0x80;
 	const Vec2 GRAVITY(0, -100);
 }
-
-Sprite* createBall(const Point& point, float radius, PhysicsMaterial material = PHYSICSBODY_MATERIAL_DEFAULT);
-Sprite* createBox(const Point& point, Size size, PhysicsMaterial material = PHYSICSBODY_MATERIAL_DEFAULT);
-Sprite* createTriangle(const Point& point, Size size, PhysicsMaterial material = PHYSICSBODY_MATERIAL_DEFAULT);
-
-Sprite* createBall(const Point& point, float radius, PhysicsMaterial material)
-{
-	Sprite* ball = Sprite::create(RES_IMAGE(ball.png));
-	ball->setScale(radius / 8);
-
-	auto body = PhysicsBody::createCircle(radius, material);
-	ball->setPhysicsBody(body);
-	ball->setPosition(point);
-	body->setTag(DRAG_BODYS_TAG);
-
-	return ball;
-}
-
-Sprite* createBox(const Point& point, Size size, PhysicsMaterial material)
-{
-	Sprite* box = Sprite::create(RES_IMAGE(YellowSquare.png));
-	box->setScale(size.width / 100.0f, size.height / 100.0f);
-
-	auto body = PhysicsBody::createBox(size);
-	box->setPhysicsBody(body);
-	box->setPosition(point);
-	box->setRotation(CCRANDOM_0_1() * 360);
-	body->setTag(DRAG_BODYS_TAG);
-
-	return box;
-}
-
-Sprite* createTriangle(const Point& point, Size size, PhysicsMaterial material)
-{
-	Sprite* triangle = Sprite::create();
-
-	Point verts[] =
-	{
-		Point(0, size.height / 2),
-		Point(size.width / 2, -size.height / 2),
-		Point(-size.width / 2, -size.height / 2)
-	};
-
-	auto body = PhysicsBody::createPolygon(verts, 3, material);
-	triangle->setPhysicsBody(body);
-	triangle->setPosition(point);
-	triangle->setRotation(CCRANDOM_0_1() * 360);
-	triangle->setTag(DRAG_BODYS_TAG);
-
-	return triangle;
-}
-
 
 CanvasScene::CanvasScene()
 :_debugDraw(false)
@@ -86,14 +35,17 @@ bool CanvasScene::toggleDebugDraw()
 
 bool CanvasScene::init()
 {
+	// create scene with physics
 	if (!Scene::initWithPhysics())
 	{
 		return false;
 	}
 
+	// add GameCanvasLayer
 	_canvasLayer = GameCanvasLayer::create();
 	this->addChild(_canvasLayer);
 
+	// add ToolLayer
 	_toolLayer = ToolLayer::create();
 	_toolLayer->setParentScene(this);
 	this->addChild(_toolLayer);
@@ -106,25 +58,17 @@ void CanvasScene::onEnter()
 	Scene::onEnter();
 	_physicsWorld->setGravity(GRAVITY);
 
-
+	// initialize keyboard listener
 	_keyboardListener = EventListenerKeyboard::create();
 	_keyboardListener->onKeyPressed = [&](EventKeyboard::KeyCode keyCode, Event * event){
 		log("KeyPress:%d", keyCode);
 		if (EventKeyboard::KeyCode::KEY_ENTER == keyCode)
-		{
-			this->_canvasLayer->save();
-		}
-		else if (EventKeyboard::KeyCode::KEY_R == keyCode)
 		{
 			this->_canvasLayer->recognize();
 		}
 		else if (EventKeyboard::KeyCode::KEY_D == keyCode)
 		{
 			this->_canvasLayer->redrawCurrentNode();
-		}
-		else if (EventKeyboard::KeyCode::KEY_T == keyCode)
-		{
-			this->_canvasLayer->train();
 		}
 		else if (EventKeyboard::KeyCode::KEY_C == keyCode)
 		{
@@ -134,36 +78,21 @@ void CanvasScene::onEnter()
 	_keyboardListener->onKeyReleased = [](EventKeyboard::KeyCode keyCode, Event * event){
 		log("KeyRelease:%d", keyCode);
 	};
+
+	// register keyboard listener to event dispatcher
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(_keyboardListener, this);
-
-	/*Vec2 offset(200, 200);
-	auto sp1 = makeTriangle(offset, Size(200,200));
-	auto sp1PhysicsBody = sp1->getPhysicsBody();
-	//sp1PhysicsBody->setTag(DRAG_BODYS_TAG);
-	this->addChild(sp1);
-
-	Vec2 offset(200, 200);
-	auto sp1 = makeBall(offset - Vec2(30, 0), 10);
-	auto sp1PhysicsBody = sp1->getPhysicsBody();
-	sp1PhysicsBody->setTag(DRAG_BODYS_TAG);
-
-	auto sp2 = makeBall(offset + Vec2(30, 0), 10);
-	auto sp2PhysicsBody = sp2->getPhysicsBody();
-	sp2PhysicsBody->setTag(DRAG_BODYS_TAG);
-
-	PhysicsJointPin* joint = PhysicsJointPin::construct(sp1PhysicsBody, sp2PhysicsBody, offset);
-	auto pw = getPhysicsWorld();
-	pw->addJoint(joint);
-
-	this->addChild(sp1);
-	this->addChild(sp2);*/
 
 }
 
 void CanvasScene::onExit()
 {
+	// stop all actions/animations
 	this->stopAllActions();
+
+	// remove event listener
 	_eventDispatcher->removeEventListenersForTarget(this);
+
+	// call super onExit
 	Scene::onExit();
 }
 
@@ -177,17 +106,22 @@ void CanvasScene::startSimulate()
 	if (this->_debugDraw){ _physicsWorld->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL); }
 	_gameLayer->setParent(nullptr);
 	this->addChild(_gameLayer);
-	//this->_keyboardListener->setEnabled(false);
 }
 
 void CanvasScene::stopSimulate()
 {
 	_gameLayer->setVisible(false);
 	_canvasLayer->setVisible(true);
+	
+	// stop all actions/animations
 	_gameLayer->stopAllActions();
+	
+	// turn off debug view
 	if (this->_debugDraw){ _physicsWorld->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_NONE); }
+	
+	// dettach game layer
 	this->removeChild(_gameLayer);
-	//this->_keyboardListener->setEnabled(true);
+	
 	_canvasLayer->stopGameSimulation();
 }
 
@@ -198,25 +132,31 @@ bool GameCanvasLayer::init()
 		return false;
 	}
 
+	// initialize loadTemplateListener, listen to EVENT_LOADED_TEMPLATE
 	auto _loadedTemplateListener = EventListenerCustom::create(EVENT_LOADED_TEMPLATE, [&](EventCustom* event){
 		_keyboardListener->setEnabled(true);
 		_mouseListener->setEnabled(true);
 	});
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(_loadedTemplateListener, this);
 
+	// add GeometricRecognizerNode
 	_geoRecognizer = GeometricRecognizerNode::create();
 	this->addChild(_geoRecognizer);
 
+	// initialize pre-command handler
 	_preCmdHandlers.init();
 	
-
 	return true;
 }
 
 void GameCanvasLayer::onEnter()
 {
 	CanvasLayer::onEnter();
+
+	// create a new draw node, and switch to it
 	_currentDrawNode = switchToNewDrawNode();
+
+	// create keyboard listener for GameCanvasLayer
 	_keyboardListener = EventListenerKeyboard::create();
 	_keyboardListener->onKeyPressed = [&](EventKeyboard::KeyCode keyCode, Event * event){
 		if (EventKeyboard::KeyCode::KEY_F5 == keyCode)
@@ -240,111 +180,28 @@ void GameCanvasLayer::onEnter()
 			this->_jointMode = false;
 		}
 	};
+
+	// disable listener in initial
 	_keyboardListener->setEnabled(false);
 	_mouseListener->setEnabled(false);
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(_keyboardListener, this);
 
-	((CanvasScene*)(this->getScene()))->toggleDebugDraw();
-	auto _world = this->getScene()->getPhysicsWorld();
-/*
-	Sprite* box = nullptr;
-//	PhysicsJointDistance* chainJoint_distance = nullptr;
-	int chainLen = 5;
-	Vector<Sprite*> boxes;
-	for (int i = 0; i < chainLen; i++) {
-		box = createBox(Point(500 + 40 * i, 600), Size(20, 10));
-		this->addChild(box);
-		boxes.pushBack(box);
-		if (i == 0)
-		{
-			box->getPhysicsBody()->setDynamic(false);
-		}
-		if (i > 0)
-		{
-			PhysicsJointDistance* chainJoint_distance = PhysicsJointDistance::construct(boxes.at(i - 1)->getPhysicsBody(), boxes.at(i)->getPhysicsBody(), Point(10, 0), Point(-10, 0));
-			chainJoint_distance->createConstraints();
-			log("DIS: %d\n", chainJoint_distance->getDistance());
-			chainJoint_distance->setDistance(-10.f);
-			_world->addJoint(chainJoint_distance);
-		}
-	}*/
-	/*
-#define ARROUND_BALLS_NUM 16
-#define ARROUND_BALLS_RADIUS 0.1f
-#define CENTER_BALL_POS Point(200, 200)
-#define SOFT_BODY_RADIUS 40.0f
-	{
-		auto box1 = createBox(Point(400, 200), Size(100, 100));
-		auto box2 = createBox(Point(300, 300), Size(40, 40));
-		this->addChild(box1);
-		this->addChild(box2);
-		
-		box1->getPhysicsBody()->getShape(0)->setFriction(0.0f);
-		box2->getPhysicsBody()->getShape(0)->setFriction(0.0f);
-		box1->getPhysicsBody()->setDynamic(false);
-		schedule([box1](float d){
-			box1->setRotation(20);
-		},"test");
-		PhysicsJointSpring* joint = PhysicsJointSpring::construct(box1->getPhysicsBody(), box2->getPhysicsBody(), Point::ANCHOR_MIDDLE, Point::ANCHOR_MIDDLE, 1000.0f, 0.8f);
-		_world->addJoint(joint);
-	}*/
-
-	/*
-	// to be finished 
-	{
-		auto centerBall = createBall(CENTER_BALL_POS, SOFT_BODY_RADIUS);
-		centerBall->getPhysicsBody()->setCategoryBitmask(0x02);
-		centerBall->getPhysicsBody()->setContactTestBitmask(0x01);
-		centerBall->getPhysicsBody()->setMass(1.0f / (float)ARROUND_BALLS_NUM);
-		this->addChild(centerBall);
-
-		auto test = 2 * SOFT_BODY_RADIUS*sinf(2 * M_PI / (float)ARROUND_BALLS_NUM);
-		Vector<Sprite*> ballsArround;
-		for (int i = 0; i < ARROUND_BALLS_NUM; i++)
-		{
-			auto angle = 2 * M_PI / ARROUND_BALLS_NUM * i;
-			Point pos = CENTER_BALL_POS + Point::forAngle(angle) * SOFT_BODY_RADIUS;
-			auto ball = createBall(pos, test / 2);
-			ball->getPhysicsBody()->setMoment(PHYSICS_INFINITY);
-			ball->getPhysicsBody()->setMass(1.0f / (float)ARROUND_BALLS_NUM);
-			ball->getPhysicsBody()->setCategoryBitmask(0x02);
-			ball->getPhysicsBody()->setContactTestBitmask(0x01);
-			ball->getPhysicsBody()->getShape(0)->setFriction(1.0f);
-			ball->getPhysicsBody()->getShape(0)->setFriction(0.5f);
-			this->addChild(ball);
-			ballsArround.pushBack(ball);
-
-			auto body = ballsArround.at(i)->getPhysicsBody();
-			PhysicsJointLimit* limitJoint = PhysicsJointLimit::construct(centerBall->getPhysicsBody(), body, Point::forAngle(angle) * SOFT_BODY_RADIUS, Point::ZERO, 0, SOFT_BODY_RADIUS*0.1);
-
-			PhysicsJointSpring* springJoint = PhysicsJointSpring::construct(centerBall->getPhysicsBody(), body, Point::forAngle(angle) * (SOFT_BODY_RADIUS + test / 2 + 4), Point::ZERO, 60, 0.75);
-			springJoint->createConstraints();
-			springJoint->setRestLength(20);
-			_world->addJoint(limitJoint);
-			_world->addJoint(springJoint);
-		}
-
-		for (int i = 0; i < ARROUND_BALLS_NUM; i++)
-		{
-			auto body = ballsArround.at(i)->getPhysicsBody();
-			auto nextArroundBody = ballsArround.at((i + 1) % ARROUND_BALLS_NUM)->getPhysicsBody();
-
-			PhysicsJointLimit* arroundEachLimitJoint = PhysicsJointLimit::construct(body, nextArroundBody, Point::ZERO, Point::ZERO, 0, test);
-			_world->addJoint(arroundEachLimitJoint);
-		}
-
-		centerBall->getPhysicsBody()->applyImpulse(Point(400, 400));
-	}*/
+	// uncomment when you want to enable debug mode when program start
+	// ((CanvasScene*)(this->getScene()))->toggleDebugDraw();
 }
 
 void GameCanvasLayer::onExit()
 {
+	// remove event listener
 	_eventDispatcher->removeEventListenersForTarget(this);
+
+	// call super onExit
 	Layer::onExit();
 }
 
 void GameCanvasLayer::onMouseDown(cocos2d::EventMouse* event)
 {
+	// if joint mode is enabled
 	if (_jointMode)
 	{
 		for (auto p = _drawNodeResultMap.begin(); p != _drawNodeResultMap.end(); p++)
@@ -359,7 +216,6 @@ void GameCanvasLayer::onMouseDown(cocos2d::EventMouse* event)
 				}
 			}
 		}
-		//joints.push_back(event->getLocationInView());
 		return;
 	}
 	CanvasLayer::onMouseDown(event);
@@ -378,22 +234,27 @@ void GameCanvasLayer::startGameSimulation()
 {
 	_mouseListener->setEnabled(false);
 }
+
 void GameCanvasLayer::stopGameSimulation()
 {
 	_mouseListener->setEnabled(true);
 }
+
 void GameCanvasLayer::removeUnrecognizedSprite(DrawableSprite* target)
 {
+	// play blink animation when sprite is not recognized
+	// @see cocos2d::Blink
 	auto actionBlink = Blink::create(1.5f, 3); 
 	auto actionDone = CallFuncN::create([&](Node* node)
 	{
+		// remove unrecognized sprite
 		this->removeChild(node);
 	});
 	Sequence* sequence = Sequence::create(actionBlink, actionDone, NULL);
 	target->runAction(sequence);
 }
 
-void GameCanvasLayer::save()
+void GameCanvasLayer::recognize()
 {
 	if (_jointMode)
 	{
@@ -431,24 +292,9 @@ GameLayer* GameCanvasLayer::createGameLayer()
 	return GameLayer::create(this->_drawNodeList, this->_drawNodeResultMap, this->getScene());
 }
 
-void GameCanvasLayer::recognize()
-{
-	_currentDrawNode->recognize();
-}
-
 void GameCanvasLayer::redrawCurrentNode()
 {
 	_currentDrawNode->redraw();
-}
-
-void GameCanvasLayer::train()
-{
-	MultiStrokeGesture multiStrokes;
-	_currentDrawNode->getMultiStrokeGesture(multiStrokes);
-	_geoRecognizer->storeAsTemplate(multiStrokes, "res/pawn.ges");
-
-	//MultiStrokeGesture msg;
-	//_geoRecognizer->loadTemplate("", "res/line.ges", msg);
 }
 
 bool ToolLayer::init()
@@ -462,21 +308,21 @@ bool ToolLayer::init()
 	Size visibleSize = Director::getInstance()->getVisibleSize();
 	Vec2 origin = Director::getInstance()->getVisibleOrigin();
 
-	_spriteAssistant = Sprite::create("images/assistant.png");
+	// assistant
+	_spriteAssistant = Sprite::create(RES_IMAGE(assistant.png));
 	_spriteAssistant->setScale(0.5f);
 	_spriteAssistant->setPosition(Vec2(origin.x + _spriteAssistant->getContentSize().width / 4 + GAP,
 		origin.y + visibleSize.height - _spriteAssistant->getContentSize().height / 4 - GAP));
-	//log("%f,%f", _spriteAssistant->getContentSize().width / 4, _spriteAssistant->getContentSize().height / 4);
 	this->addChild(_spriteAssistant);
 
-	_labelHint = Label::create(TOOL_HINT_WELCOME, "fonts/Marker Felt.ttf", 24, Size::ZERO, TextHAlignment::LEFT, TextVAlignment::CENTER);
+	// hint label
+	_labelHint = Label::create(TOOL_HINT_WELCOME, DEFAULT_FONT, 24, Size::ZERO, TextHAlignment::LEFT, TextVAlignment::CENTER);
 	_labelHint->setAnchorPoint(Vec2(0, 0));
 	_labelHint->setPosition(Vec2(origin.x + _spriteAssistant->getContentSize().width / 2 + 4 * GAP,
 		origin.y + visibleSize.height - _spriteAssistant->getContentSize().height / 4 - GAP));
-	//_labelHint->setOpacity(200);
 	this->addChild(_labelHint);
 
-	// add a "start simulate/stop simulate" icon to exit the progress. it's an autorelease object
+	// add a "start simulate/stop simulate" icon to enter/exit the progress. it's an autorelease object
 	_menuStartSimulate = MenuItemImage::create(
 		RES_IMAGE(StartSimulate.png),
 		RES_IMAGE(StartSimulateHover.png),
@@ -495,25 +341,8 @@ bool ToolLayer::init()
 	_menuStopSimulate->setPosition(Vec2(origin.x + visibleSize.width - _menuStopSimulate->getContentSize().width / 2,
 		origin.y + visibleSize.height - _menuStopSimulate->getContentSize().height / 2));
 	_menuStopSimulate->setVisible(false);
-
-	/*_menuStartJoint = MenuItemImage::create(
-		RES_IMAGE(StartJointMode.png),
-		RES_IMAGE(StartJointModeHover.png),
-		CC_CALLBACK_1(ToolLayer::startJointModeCallback, this));
-	_menuStartJoint->setScale(0.5f);
-	_menuStartJoint->setPosition(Vec2(origin.x + visibleSize.width - _menuStartSimulate->getContentSize().width - _menuStartJoint->getContentSize().width / 2,
-		origin.y + visibleSize.height - _menuStartJoint->getContentSize().height / 2));
-	_menuStartJoint->setVisible(true);
 	
-	_menuStopJoint = MenuItemImage::create(
-		RES_IMAGE(StopJointMode.png),
-		RES_IMAGE(StopJointModeHover.png),
-		CC_CALLBACK_1(ToolLayer::stopJointModeCallback, this));
-	_menuStopJoint->setScale(0.5f);
-	_menuStopJoint->setPosition(Vec2(origin.x + visibleSize.width - _menuStartSimulate->getContentSize().width - _menuStopJoint->getContentSize().width / 2,
-		origin.y + visibleSize.height - _menuStopJoint->getContentSize().height / 2));
-	_menuStopJoint->setVisible(false);*/
-	
+	// add debug menu
 	_menuStartDebug = MenuItemImage::create(
 		RES_IMAGE(DebugMode.png),
 		RES_IMAGE(DebugMode.png));
@@ -550,6 +379,7 @@ void ToolLayer::onEnter()
 {
 	Layer::onEnter();
 
+	// initialize listeners
 	_recognizeSuccessListener = EventListenerCustom::create(EVENT_RECOGNIZE_SUCCESS, CC_CALLBACK_1(ToolLayer::onRecognizeSuccess, this));
 	_recognizeFailedListener = EventListenerCustom::create(EVENT_RECOGNIZE_FAILED, CC_CALLBACK_1(ToolLayer::onRecognizeFailed, this));
 
@@ -564,12 +394,15 @@ void ToolLayer::onEnter()
 		LoadTemplateData* ltd = static_cast<LoadTemplateData*>(event->getUserData());
 		this->_labelHint->setString(ltd->_hint.c_str());
 	});
+
+	// register listeners
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(_loadTemplateListener, this);
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(_loadedTemplateListener, this);
 }
 
 void ToolLayer::onExit()
 {
+	// remove listeners
 	_eventDispatcher->removeEventListenersForTarget(this);
 	Layer::onExit();
 }
@@ -593,20 +426,17 @@ void ToolLayer::startJointModeCallback(cocos2d::Ref* pSender)
 {
 	_menuStartJoint->setVisible(false);
 	_menuStopJoint->setVisible(true);
-	/*_canvasScene->stopSimulate();*/
 }
 
 void ToolLayer::stopJointModeCallback(cocos2d::Ref* pSender)
 {
 	_menuStartJoint->setVisible(true);
 	_menuStopJoint->setVisible(false);
-	//_canvasScene->stopSimulate();
 }
 
 void ToolLayer::toggleDebugMode(bool isDebug)
 {
 	_menuStartDebug->setVisible(isDebug);
-	//_canvasScene->stopSimulate();
 }
 
 bool GameLayer::init()
@@ -615,14 +445,14 @@ bool GameLayer::init()
 	{
 		return false;
 	}
-	log("game layer init");
+	
+	// init post-command handler
 	_postCmdHandlers.init();
 	
-	//GenSpriteResultMap& genSpriteMap = _genSpriteResultMap;
-	// iterate to retrieve recognized sprite
+	// init Geometric physics body collison mask
 	InitGeometricPhysicsMask();
 
-
+	// put recognized sprite into priority queue
 	priority_queue<RecognizedSprite*, vector<RecognizedSprite*>, RecognizedSpriteLessCmp> lazyQueue;
 	for (auto p = _drawNodeResultMap.begin(); p != _drawNodeResultMap.end(); p++)
 	{
@@ -631,6 +461,8 @@ bool GameLayer::init()
 		if (!ds->empty() && rs->_priority >= 0){ lazyQueue.push(rs); }
 	}
 
+	// fetch recognized sprite from priority queue according to sprite priority
+	// generate sprite with physics body with post-command handler
 	while (!lazyQueue.empty())
 	{
 		auto rs = lazyQueue.top();
@@ -638,6 +470,8 @@ bool GameLayer::init()
 		auto cmdh = _postCmdHandlers.getCommandHandler(rs->getGeometricType());
 		if (!cmdh._Empty()) cmdh(*rs, _drawNodeList, this, &_genSpriteResultMap);
 	}
+
+	log("game layer init");
 
 	return true;
 }

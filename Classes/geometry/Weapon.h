@@ -17,8 +17,8 @@ struct AttackData
 	, _investigator(investigator)
 	{}
 
-	cocos2d::Vec2 _targetLocation;	// attack location
-	cocos2d::Node* _investigator;	// attack investigator
+	cocos2d::Vec2	_targetLocation;	// attack location
+	cocos2d::Node*	_investigator;		// attack investigator
 };
 
 /**
@@ -106,20 +106,30 @@ public:
 	 * @see BulletManager
 	 * @return	Bullet object layer
 	 */
-	BulletManager* getBulletLayer() const{ return this->_bulletManager; }
+	BulletManager* getBulletLayer() const
+	{
+		return this->_bulletManager;
+	}
 
 	/**
 	 * Get Bullet object layer
 	 * @see BulletManager
 	 * @return	Bullet object layer
 	 */
-	void setGunman(cocos2d::Node* gunman){ this->_gunman = gunman; }
+	void setGunman(cocos2d::Node* gunman)
+	{
+		this->_gunman = gunman;
+	}
 
 	/**
 	 * Get Gunman who is possession of this pistal
 	 * @return	Gunman object pointer
 	 */
-	cocos2d::Node* getGunman(){ return this->_gunman; }
+	cocos2d::Node* getGunman()
+	{
+		return this->_gunman;
+	}
+
 private:
 	BulletManager* _bulletManager;	// BulletManager for spawning bullets
 	cocos2d::Node* _gunman;			// pointer to gunman

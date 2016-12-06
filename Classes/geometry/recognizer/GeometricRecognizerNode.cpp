@@ -26,7 +26,8 @@ bool GeometricRecognizerNode::init()
 		// template type names
 		string templateNames[] = 
 		{ 
-			//"Line",
+			// it seems "Line" symbol cannot be recognized by $N algorithm together with the following symbols
+			//"Line",			
 			"Circle", 
 			"Triangle",
 			"Rectangle", 

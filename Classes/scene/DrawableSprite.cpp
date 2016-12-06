@@ -21,36 +21,15 @@ DrawableSprite::DrawableSprite()
 	_lineWidth = 3;
 }
 
-/*bool DrawableSprite::init()
-{
-	if (!DrawNode::init())
-	{
-		return false; 
-	}
-	
-	return true;
-}*/
-
-void DrawableSprite::onEnter()
-{
-	DrawNode::onEnter();
-	
-	//this->addChild(_target);
-}
-
-void DrawableSprite::onExit()
-{
-	//_target->release();
-
-	//Director::getInstance()->getTextureCache()->removeUnusedTextures();
-	DrawNode::onExit();
-}
-
 void DrawableSprite::addToPath(Vec2 from, Vec2 to)
 {
-	//if (!_path.empty()){ _path.pop_back(); }
+	// add two new point to current path
 	this->_path.push_back(from); this->_path.push_back(to);
+
+	// calculate new bary center with 2 new points
 	_baryCenter = (_baryCenter*(_path.size() / 2 - 1) + (from + to) / 2) / (_path.size() / 2);
+
+	// calculate new content border rectangle
 	_xMin = MIN(MIN(from.x, to.x), _xMin);
 	_xMax = MAX(MAX(from.x, to.x), _xMax);
 	_yMin = MIN(MIN(from.y, to.y), _yMin);
@@ -67,6 +46,8 @@ void DrawableSprite::redraw()
 
 DrawableSprite* DrawableSprite::createWithMultiStrokeGesture(const MultiStrokeGesture& multiStrokes)
 {
+	// convert MultiStrokeGesture to path
+	// flatten stroke gesture, split joint point into 2 point
 	DrawableSprite *pRet = new(std::nothrow) DrawableSprite();
 	if (pRet && pRet->init())
 	{
@@ -96,6 +77,9 @@ DrawableSprite* DrawableSprite::createWithMultiStrokeGesture(const MultiStrokeGe
 
 MultiStrokeGesture& DrawableSprite::getMultiStrokeGesture(MultiStrokeGesture& multiStrokes)
 {
+	// convert path to MultiStrokeGesture
+	// check current point is connect to next point in the path
+	// true if point in current stroke, false make a new stroke
 	Vec2 prev = *(_path.begin());
 	Path2D path;
 	path.push_back(NORMALIZE_VEC2_TO_POINT2D(prev, SCALE));
@@ -135,6 +119,7 @@ RecognitionResult DrawableSprite::recognize()
 
 Texture2D* DrawableSprite::createTexture()
 {
+	// use RenderTexture to generate Texture2D instance
 	auto _target = RenderTexture::create(VisibleRect::width(), VisibleRect::height(), Texture2D::PixelFormat::RGBA8888);
 	_target->begin();
 	this->visit();
@@ -145,6 +130,9 @@ Texture2D* DrawableSprite::createTexture()
 bool DrawableSprite::containsPoint(const Vec2& point)
 {
 	bool hasMin = false, hasMax = false;
+
+	// compare (x, y) with all points in path
+	// true if find min =< (x, y) <= max, false otherwise
 	for (auto p = _path.begin(); p != _path.end(); p ++)
 	{
 		hasMin |= p->x <= point.x&&p->y <= point.y;

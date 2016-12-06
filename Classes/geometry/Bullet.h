@@ -63,11 +63,11 @@ public:
 	 */
 	CREATE_FUNC(BulletManager);
 private:
-	cocos2d::Array* m_bulletCache;					// Cache to store bullets
-	cocos2d::SpriteBatchNode* m_spriteBatchNode;	// Batch node to generate renderable bullet sprite
-	cocos2d::SpriteBatchNode* m_dustyBatchNode;		// Batch node to generate renderable dusty
-	cocos2d::Vec2 _velocity;						// Bullet moving velocity
-	cocos2d::Size _winSize;							// Bullet layer size
+	cocos2d::Array*				m_bulletCache;		// Cache to store bullets
+	cocos2d::SpriteBatchNode*	m_spriteBatchNode;	// Batch node to generate renderable bullet sprite
+	cocos2d::SpriteBatchNode*	m_dustyBatchNode;	// Batch node to generate renderable dusty
+	cocos2d::Vec2				_velocity;			// Bullet moving velocity
+	cocos2d::Size				_winSize;			// Bullet layer size
 };
 
 #endif	/* __BULLET_H__ */

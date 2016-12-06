@@ -30,34 +30,69 @@ CommandHandler CommandHandlerFactory::getCommandHandler(const string& name)
 	else return nullptr;
 }
 
+// new callbacks based on C++11
 #define CC_CALLBACK_4(__selector__,__target__, ...) std::bind(&__selector__,__target__, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, ##__VA_ARGS__)
 
 bool PreCommandHandlerFactory::init()
 {
+	// circle
 	this->registerCommandHandler(GT_MESH_CIRCLE, CC_CALLBACK_4(PreCommandHandlerFactory::handleDefault, this));
+
+	// triangle
 	this->registerCommandHandler(GT_MESH_TRIANGLE, CC_CALLBACK_4(PreCommandHandlerFactory::handleDefault, this));
+
+	// rectangle
 	this->registerCommandHandler(GT_MESH_RECTANGLE, CC_CALLBACK_4(PreCommandHandlerFactory::handleDefault, this));
+
+	// pawn
 	this->registerCommandHandler(GT_MESH_PAWN, CC_CALLBACK_4(PreCommandHandlerFactory::handleDefault, this));
+
+	// groove
 	this->registerCommandHandler(GT_MESH_GROOVE, CC_CALLBACK_4(PreCommandHandlerFactory::handleDefault, this));
-	this->registerCommandHandler(GT_MESH_SPRING, [](RecognizedSprite& recSprite, list<DrawableSprite*>& drawNodeList, Node* owner, void* udata){
+
+	// spring, @see CommandHandler
+	this->registerCommandHandler(GT_MESH_SPRING, [](
+		RecognizedSprite& recSprite, 
+		list<DrawableSprite*>& drawNodeList, 
+		Node* owner, 
+		void* udata)
+	{
 		DrawSpriteResultMap* rmap = static_cast<DrawSpriteResultMap*>(udata);
 		if (rmap)
 		{
-			recSprite._priority = 4;
-			rmap->insert(pair<DrawableSprite*, RecognizedSprite>(recSprite._drawNode, recSprite));
-		}
-	});
-	this->registerCommandHandler(GT_MESH_PISTAL, [](RecognizedSprite& recSprite, list<DrawableSprite*>& drawNodeList, Node* owner, void* udata){
-		DrawSpriteResultMap* rmap = static_cast<DrawSpriteResultMap*>(udata);
-		if (rmap)
-		{
+			// defualt priority is 5
+			// set a lower priority so that Spring can attach to other
+			// existing object drawn after it
 			recSprite._priority = 4;
 			rmap->insert(pair<DrawableSprite*, RecognizedSprite>(recSprite._drawNode, recSprite));
 		}
 	});
 
-	this->registerCommandHandler(GT_MARK_STATIC,
-		[](RecognizedSprite& recSprite, list<DrawableSprite*>& drawNodeList, Node* owner, void* udata){
+	// pistal, @see CommandHandler
+	this->registerCommandHandler(GT_MESH_PISTAL, [](
+		RecognizedSprite& recSprite, 
+		list<DrawableSprite*>& drawNodeList,
+		Node* owner, 
+		void* udata)
+	{
+		DrawSpriteResultMap* rmap = static_cast<DrawSpriteResultMap*>(udata);
+		if (rmap)
+		{
+			// defualt priority is 5
+			// set a lower priority so that Pistal can attach to other 
+			// existing object drawn after it, such as a gunman
+			recSprite._priority = 4;
+			rmap->insert(pair<DrawableSprite*, RecognizedSprite>(recSprite._drawNode, recSprite));
+		}
+	});
+
+	// static, @see CommandHandler
+	this->registerCommandHandler(GT_MARK_STATIC, [](
+		RecognizedSprite& recSprite,
+		list<DrawableSprite*>& drawNodeList,
+		Node* owner,
+		void* udata)
+	{
 		DrawSpriteResultMap* rmap = static_cast<DrawSpriteResultMap*>(udata);
 		if (rmap)
 		{
@@ -65,11 +100,19 @@ bool PreCommandHandlerFactory::init()
 			rmap->insert(pair<DrawableSprite*, RecognizedSprite>(recSprite._drawNode, recSprite));
 		}
 	});
-	this->registerCommandHandler(GT_MARK_CONCTROL,
-		[](RecognizedSprite& recSprite, list<DrawableSprite*>& drawNodeList, Node* owner, void* udata){
+
+	// control/check, @see CommandHandler
+	this->registerCommandHandler(GT_MARK_CONCTROL, [](
+		RecognizedSprite& recSprite,
+		list<DrawableSprite*>& drawNodeList,
+		Node* owner,
+		void* udata)
+	{
 		DrawSpriteResultMap* rmap = static_cast<DrawSpriteResultMap*>(udata);
 		if (rmap)
 		{
+			// iterate result map to find other control symbol
+			// just remove it if find, transfer control to current sprite
 			auto p = rmap->begin();
 			while (p != rmap->end())
 			{
@@ -84,38 +127,45 @@ bool PreCommandHandlerFactory::init()
 				}
 				++p;
 			}
-
+			
+			// lower priority to make sure other sprite can be generated before this
 			recSprite._priority = 1;
 			rmap->insert(pair<DrawableSprite*, RecognizedSprite>(recSprite._drawNode, recSprite));
 		}
 	});
-	this->registerCommandHandler(GT_MARK_DELETE, 
-		[](RecognizedSprite& recSprite, list<DrawableSprite*>& drawNodeList, Node* owner, void* udata){
+
+	// delete, @see CommandHandler
+	this->registerCommandHandler(GT_MARK_DELETE, [](
+		RecognizedSprite& recSprite,
+		list<DrawableSprite*>& drawNodeList,
+		Node* owner,
+		void* udata)
+	{
 		RecognitionResult& result = recSprite._result;
 		DrawableSprite* currentDrawNode = recSprite._drawNode;
 		Vec2 position = currentDrawNode->getShapeCenter();
 
+		// iterate all sprites 
+		// remove other sprite when this delete symbol IsSnappedTo other sprite
 		for (auto i = drawNodeList.begin(); i != drawNodeList.end(); i++)
 		{
 			if (*i != currentDrawNode)
 			{
 				Vec2 candinate = (*i)->getShapeCenter();
 				if (IsSnapedTo(currentDrawNode, *i))
-				//if (abs(position.x - candinate.x) + abs(position.y - candinate.y) < 100)
 				{
 					DrawSpriteResultMap* rmap = static_cast<DrawSpriteResultMap*>(udata);
 					if (rmap && rmap->end() != rmap->find(*i))rmap->erase(*i);
 					owner->removeChild(*i);
 					i = drawNodeList.erase(i);
-					//drawNodeList.remove(*i);
-
-					//break;
 				}
 			}
 		}
+		// remove itself
 		drawNodeList.remove(currentDrawNode);
 		owner->removeChild(currentDrawNode);
 	});
+
 	return true;
 }
 
@@ -125,6 +175,7 @@ void PreCommandHandlerFactory::handleDefault(
 	cocos2d::Node* owner,
 	void* udata)
 {
+	// just add to result map, with defualt priority
 	DrawSpriteResultMap* rmap = static_cast<DrawSpriteResultMap*>(udata);
 	if (rmap)
 	{
@@ -134,6 +185,7 @@ void PreCommandHandlerFactory::handleDefault(
 
 bool PostCommandHandlerFactory::init()
 {
+	// circle, @see makePhysicsBodyAsBall
 	this->registerCommandHandler(GT_MESH_CIRCLE, [](RecognizedSprite& recSprite,
 		list<DrawableSprite*>& drawNodeList,
 		Node* owner,
@@ -141,23 +193,36 @@ bool PostCommandHandlerFactory::init()
 	{
 		handleDefaultWithPhysics(recSprite, drawNodeList, owner, udata, makePhysicsBodyAsBall);
 	});
+
+	// triangle, @see PostCommandHandlerFactory::handleDefault
 	this->registerCommandHandler(GT_MESH_TRIANGLE, CC_CALLBACK_4(PostCommandHandlerFactory::handleDefault, this));
+
+	// rectangle, @see PostCommandHandlerFactory::handleDefault
 	this->registerCommandHandler(GT_MESH_RECTANGLE, CC_CALLBACK_4(PostCommandHandlerFactory::handleDefault, this));
-	this->registerCommandHandler(GT_MESH_PAWN, [](RecognizedSprite& recSprite,
+
+	// pawn, @see makePhysicsBodyAsBox
+	this->registerCommandHandler(GT_MESH_PAWN, [](
+		RecognizedSprite& recSprite,
 		list<DrawableSprite*>& drawNodeList,
 		Node* owner,
 		void* udata)
 	{
 		handleDefaultWithPhysics(recSprite, drawNodeList, owner, udata, makePhysicsBodyAsBox);
 	});
-	this->registerCommandHandler(GT_MESH_GROOVE, [](RecognizedSprite& recSprite,
+
+	// groove, @see makePhysicsBodyAsGroove
+	this->registerCommandHandler(GT_MESH_GROOVE, [](
+		RecognizedSprite& recSprite,
 		list<DrawableSprite*>& drawNodeList,
 		Node* owner,
 		void* udata)
 	{
 		handleDefaultWithPhysics(recSprite, drawNodeList, owner, udata, makePhysicsBodyAsGroove);
 	});
-	this->registerCommandHandler(GT_MESH_SPRING, [](RecognizedSprite& recSprite,
+
+	// spring, @see CommandHandler
+	this->registerCommandHandler(GT_MESH_SPRING, [](
+		RecognizedSprite& recSprite,
 		list<DrawableSprite*>& drawNodeList,
 		Node* owner,
 		void* udata)
@@ -169,9 +234,10 @@ bool PostCommandHandlerFactory::init()
 		sprite->setPosition(position);
 		sprite->setFlippedY(true);
 
+		// attach sprite to it's parent sprite/scene
 		owner->addChild(sprite);
+
 		GenSpriteResultMap* rmap = static_cast<GenSpriteResultMap*>(udata);
-		
 		if (rmap)
 		{
 			vector<Sprite*> targets(2);
@@ -180,10 +246,17 @@ bool PostCommandHandlerFactory::init()
 			auto path = ds->getPath();
 			auto first = path.front();
 			auto end = path.back();
+
 			for (auto p = rmap->begin(); p != rmap->end(); p++)
 			{
 				auto cur = p->second;
-				auto curRect = Rect(Vec2(cur->getPositionX(), cur->getPositionY()) - cur->getContentSize() / 2, cur->getContentSize());
+				// calculate current rectangle area
+				auto curRect = Rect(
+					Vec2(cur->getPositionX(), cur->getPositionY()) - cur->getContentSize() / 2,		// left-down location
+					cur->getContentSize()
+					);
+				
+				// if current rectangle area contains one of the spring side points.
 				if (curRect.containsPoint(first))
 				{ 
 					targets[0] = cur;
@@ -197,11 +270,11 @@ bool PostCommandHandlerFactory::init()
 					cnt++;
 				}
 			}
+
+			// spring can have only 2 joints
 			if (cnt == 2)
 			{
-				//targets[0]->getPhysicsBody()->getShape(0)->setFriction(1.0f);
-				//targets[1]->getPhysicsBody()->getShape(0)->setFriction(1.0f);
-
+				// spring joint
 				auto joint = PhysicsJointSpring::construct(
 					targets[0]->getPhysicsBody(),
 					targets[1]->getPhysicsBody(),
@@ -212,30 +285,44 @@ bool PostCommandHandlerFactory::init()
 				auto physicsWorld = owner->getScene()->getPhysicsWorld();
 				physicsWorld->addJoint(joint);
 
+				// schedule key for different spring instance
 				static int springCnt = 0;
 				char scheduleKey[20];
 				sprintf(scheduleKey, "spring_%d", springCnt);
 				springCnt++;
-				auto originalDistance = EuclideanDistance(targets[0]->getPosition() + anchors[0],
-					targets[1]->getPosition() + anchors[1]);
-				owner->schedule([sprite, targets, anchors, originalDistance](float delta){
+
+				// distance transformation
+				auto originalDistance = EuclideanDistance(
+					targets[0]->getPosition() + anchors[0],
+					targets[1]->getPosition() + anchors[1]
+					);
+
+				// schedule by owner, just like tick update
+				owner->schedule([sprite, targets, anchors, originalDistance](float delta)
+				{
+					// calculate rotate angle by joints location
 					auto posA = ccpRotateByAngle(targets[0]->getPosition() + anchors[0], 
 						targets[0]->getPosition(), CC_DEGREES_TO_RADIANS(-targets[0]->getRotation()));
 					auto posB = ccpRotateByAngle(targets[1]->getPosition() + anchors[1],
 						targets[1]->getPosition(), CC_DEGREES_TO_RADIANS(-targets[1]->getRotation()));
+					// set location to the center of 2 joints
 					sprite->setPosition((posA + posB) / 2);
 					auto strentchDistance = EuclideanDistance(posA, posB);
 					auto currentDirection = (posB - posA);
 					auto originalDirection = Vec2(0.0f, -1.0f);
+					// rotate spring
 					float rotator = CC_RADIANS_TO_DEGREES(ccpAngle(currentDirection, originalDirection));
 					sprite->setRotation(rotator);
+					// strentch spring length
 					sprite->setScaleY(strentchDistance / originalDistance);
 				}, scheduleKey);
 			}
-			//rmap->insert(pair<DrawableSprite*, Sprite*>(recSprite._drawNode, sprite));
 		}
 	});
-	this->registerCommandHandler(GT_MESH_PISTAL, [](RecognizedSprite& recSprite,
+
+	// pistal, @see CommandHandler
+	this->registerCommandHandler(GT_MESH_PISTAL, [](
+		RecognizedSprite& recSprite,
 		list<DrawableSprite*>& drawNodeList,
 		Node* owner,
 		void* udata)
@@ -284,12 +371,14 @@ bool PostCommandHandlerFactory::init()
 
 		if (rmap)rmap->insert(pair<DrawableSprite*, Sprite*>(ds, pistal));
 	});
-	/*
-	this->registerCommandHandler("rectangle", [](RecognizedSprite recSprite, list<DrawableSprite*>& drawNodeList, Node* owner){
-	
-	});*/
 
-	/*this->registerCommandHandler("CheckMark", [](RecognizedSprite& recSprite, list<DrawableSprite*>& drawNodeList, Node* owner, void* udata){
+	// static, @see CommandHandler
+	this->registerCommandHandler(GT_MARK_STATIC, [](
+		RecognizedSprite& recSprite,
+		list<DrawableSprite*>& drawNodeList,
+		Node* owner, 
+		void* udata)
+	{
 		GenSpriteResultMap* rmap = static_cast<GenSpriteResultMap*>(udata);
 		if (rmap)
 		{
@@ -302,57 +391,32 @@ bool PostCommandHandlerFactory::init()
 				if (*i != currentDrawNode)
 				{
 					Vec2 candinate = (*i)->getShapeCenter();
-					if (abs(position.x - candinate.x) + abs(position.y - candinate.y) < 100)
-					{
-
-						auto p = rmap->find(*i);
-						if (p != rmap->end())
-						{
-							auto s = (p->second);
-							auto pb = s->getPhysicsBody();
-							pb->setDynamic(false);
-						}
-
-						//(*i)->setDynamic(false);
-						break;
-					}
-				}
-			}
-		}
-	});*/
-
-	this->registerCommandHandler(GT_MARK_STATIC, [](RecognizedSprite& recSprite, list<DrawableSprite*>& drawNodeList, Node* owner, void* udata){
-		GenSpriteResultMap* rmap = static_cast<GenSpriteResultMap*>(udata);
-		if (rmap)
-		{
-			RecognitionResult& result = recSprite._result;
-			DrawableSprite* currentDrawNode = recSprite._drawNode;
-			Vec2 position = currentDrawNode->getShapeCenter();
-			for (auto i = drawNodeList.begin(); i != drawNodeList.end(); i++)
-			{
-				// is not static mark
-				if (*i != currentDrawNode)
-				{
-					Vec2 candinate = (*i)->getShapeCenter();
+					// if static mark is snaped to a node
 					if (IsSnapedTo(currentDrawNode, *i))
 					{
 
 						auto p = rmap->find(*i);
 						if (p != rmap->end())
 						{
+							// set node as static/non-dynamic
 							auto s = (p->second);
 							auto pb = s->getPhysicsBody();
 							pb->setDynamic(false);
 						}
-
-						//(*i)->setDynamic(false);
 						break;
 					}
 				}
 			}
 		}
 	});
-	this->registerCommandHandler(GT_MARK_CONCTROL, [](RecognizedSprite& recSprite, list<DrawableSprite*>& drawNodeList, Node* owner, void* udata){
+
+	// control
+	this->registerCommandHandler(GT_MARK_CONCTROL, [](
+		RecognizedSprite& recSprite,
+		list<DrawableSprite*>& drawNodeList,
+		Node* owner,
+		void* udata)
+	{
 		GenSpriteResultMap* rmap = static_cast<GenSpriteResultMap*>(udata);
 		if (rmap)
 		{
@@ -361,16 +425,18 @@ bool PostCommandHandlerFactory::init()
 			Vec2 position = currentDrawNode->getShapeCenter();
 			for (auto i = drawNodeList.begin(); i != drawNodeList.end(); i++)
 			{
-				// is not static mark
+				// is not control mark
 				if (*i != currentDrawNode)
 				{
 					Vec2 candinate = (*i)->getShapeCenter();
+					// if control mark is snaped to a node, with epsilon 0.5
 					if (IsSnapedTo(currentDrawNode, *i, 0.5f))
 					{
 
 						auto p = rmap->find(*i);
 						if (p != rmap->end())
 						{
+							// attach a pawn controll to the node
 							auto s = (p->second);
 							s->addComponent(PawnController::create());
 						}
@@ -392,12 +458,23 @@ void handleDefaultWithPhysics(
 {
 	RecognitionResult& result = recSprite._result;
 	DrawableSprite* ds = recSprite._drawNode;
-	Vec2 position = ds->getShapeCenter();
+
+	// create sprite with drawn texture(clipped by content rectangle) 
 	auto sprite = Sprite::createWithTexture(ds->createTexture(), ds->contentRect());
+	// set shape center as current postion
+	Vec2 position = ds->getShapeCenter();
 	sprite->setPosition(position);
+	// flip Y
 	sprite->setFlippedY(true);
-	if (pfMakePhysicsBody){ sprite->addComponent(pfMakePhysicsBody(ds)); }
+
+	// if the pointer to function pfMakePhysicsBody is set,
+	// add a physics body created by pfMakePhysicsBody to sprite
+	if (pfMakePhysicsBody) sprite->addComponent(pfMakePhysicsBody(ds));
+
+	// attach to owner
 	owner->addChild(sprite);
+
+	// add to generated sprite result map
 	GenSpriteResultMap* rmap = static_cast<GenSpriteResultMap*>(udata);
 	if (rmap)rmap->insert(pair<DrawableSprite*, Sprite*>(recSprite._drawNode, sprite));
 }
@@ -408,6 +485,7 @@ void PostCommandHandlerFactory::handleDefault(
 	Node* owner, 
 	void* udata)
 {
+	// default use makePhysicsBodyAsPolygon to generate physics body
 	handleDefaultWithPhysics(recSprite, drawNodeList, owner, udata, makePhysicsBodyAsPolygon);
 }
 
@@ -418,11 +496,16 @@ void PostCommandHandlerFactory::makeJoints(
 {
 	for (auto pjoints = jointsList.begin(); pjoints != jointsList.end(); pjoints++)
 	{
-		//vector<Sprite*> spriteList;
+		// check is empty
 		if (pjoints->empty())continue;
-		//auto start = (*(pjoints->begin()))->getPhysicsBody();
+
 		PhysicsBody* body[2];
+
+		// for current joints count
+		// if c>=2 there is a pair of joints
 		int c = 0;
+
+		// iterate to find joints, make joints by one to one pair
 		for (auto i = pjoints->begin(); i != pjoints->end(); i++)
 		{
 			auto p = resultMap.find(*i);
@@ -433,12 +516,11 @@ void PostCommandHandlerFactory::makeJoints(
 				body[c] = cur;
 				if (c)
 				{
-					if (body[0] != nullptr&&body[1] != nullptr&&body[0] != body[1])
+					// if all joints is valid
+					if (body[0] != nullptr
+						&&body[1] != nullptr
+						&&body[0] != body[1])
 					{
-					//	int collisionMask = ~(body[0]->getCategoryBitmask() | body[1]->getCategoryBitmask());
-						//log("A: %x, B: %x, R: %x", body[0]->getCategoryBitmask(), body[1]->getCategoryBitmask(), collisionMask);
-					//	body[0]->setCollisionBitmask(collisionMask);
-					//	body[1]->setCollisionBitmask(collisionMask);
 						PhysicsJointDistance* joint = PhysicsJointDistance::construct(body[0], body[1], Point::ZERO, Point::ZERO);
 						physicsWorld->addJoint(joint);
 					}
@@ -446,28 +528,12 @@ void PostCommandHandlerFactory::makeJoints(
 					{
 						cocos2d::log("ERROR: Body[0]=%d, Body[1]=%d", body[0], body[1]);
 					}
+					// mark body[1] as first joint, wait for next joint
 					body[0] = body[1];
 					c = 0;
 				}
 				c++;
 			}
 		}
-		/*for (auto p = resultMap.begin(); p != resultMap.end(); p++)
-		{
-		auto sprite = (p->second);
-		Vec2 spLoc = (sprite->getPosition());
-		Size size = sprite->getContentSize();
-		Vec2 anchor = sprite->getAnchorPoint();
-		Vec2 spLoc0 = spLoc - Vec2(anchor.x*size.width, anchor.y*size.height);
-		Rect rect = CCRectMake(spLoc0.x, spLoc0.y, size.width, size.height);
-		if (rect.containsPoint(*i))spriteList.push_back(sprite);
-		else spriteList.push_back(nullptr);
-		}*/
-
-		/*if (!spriteList.empty())
-		{
-			auto start = *(spriteList.begin());
-			//for (auto p)
-		}*/
 	}
 }
