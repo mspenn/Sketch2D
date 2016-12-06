@@ -11,6 +11,10 @@
 #ifdef _DEBUG
 #include <iostream>
 #endif
+
+/**
+ * Walk dir and save files/sub directories in a vector container
+ */
 void dir(const char* path, std::vector<std::string>& res, int walk_mask)
 {
 #ifdef WIN32
@@ -66,15 +70,3 @@ void dir(const char* path, std::vector<std::string>& res, int walk_mask)
 	closedir(pDir);
 #endif
 }
-#ifdef _DEBUG
-int main(int argc, char* argv[])
-{
-	std::vector<std::string> res;
-	dir(argv[1], res, false);
-	for(std::vector<std::string>::iterator iter = res.begin(); iter!=res.end(); iter++)
-	{
-		std::cout << *iter << std::endl;
-	}
-	return 0;
-}
-#endif

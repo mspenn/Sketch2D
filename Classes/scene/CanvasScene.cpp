@@ -17,6 +17,58 @@ namespace
 	const Vec2 GRAVITY(0, -100);
 }
 
+Sprite* createBall(const Point& point, float radius, PhysicsMaterial material = PHYSICSBODY_MATERIAL_DEFAULT);
+Sprite* createBox(const Point& point, Size size, PhysicsMaterial material = PHYSICSBODY_MATERIAL_DEFAULT);
+Sprite* createTriangle(const Point& point, Size size, PhysicsMaterial material = PHYSICSBODY_MATERIAL_DEFAULT);
+
+Sprite* createBall(const Point& point, float radius, PhysicsMaterial material)
+{
+	Sprite* ball = Sprite::create(RES_IMAGE(ball.png));
+	ball->setScale(radius / 8);
+
+	auto body = PhysicsBody::createCircle(radius, material);
+	ball->setPhysicsBody(body);
+	ball->setPosition(point);
+	body->setTag(DRAG_BODYS_TAG);
+
+	return ball;
+}
+
+Sprite* createBox(const Point& point, Size size, PhysicsMaterial material)
+{
+	Sprite* box = Sprite::create(RES_IMAGE(YellowSquare.png));
+	box->setScale(size.width / 100.0f, size.height / 100.0f);
+
+	auto body = PhysicsBody::createBox(size);
+	box->setPhysicsBody(body);
+	box->setPosition(point);
+	box->setRotation(CCRANDOM_0_1() * 360);
+	body->setTag(DRAG_BODYS_TAG);
+
+	return box;
+}
+
+Sprite* createTriangle(const Point& point, Size size, PhysicsMaterial material)
+{
+	Sprite* triangle = Sprite::create();
+
+	Point verts[] =
+	{
+		Point(0, size.height / 2),
+		Point(size.width / 2, -size.height / 2),
+		Point(-size.width / 2, -size.height / 2)
+	};
+
+	auto body = PhysicsBody::createPolygon(verts, 3, material);
+	triangle->setPhysicsBody(body);
+	triangle->setPosition(point);
+	triangle->setRotation(CCRANDOM_0_1() * 360);
+	triangle->setTag(DRAG_BODYS_TAG);
+
+	return triangle;
+}
+
+
 CanvasScene::CanvasScene()
 :_debugDraw(false)
 {
@@ -123,6 +175,7 @@ void CanvasScene::startSimulate()
 	_canvasLayer->setVisible(false);
 	_canvasLayer->stopAllActions();
 	if (this->_debugDraw){ _physicsWorld->setDebugDrawMask(PhysicsWorld::DEBUGDRAW_ALL); }
+	_gameLayer->setParent(nullptr);
 	this->addChild(_gameLayer);
 	//this->_keyboardListener->setEnabled(false);
 }
@@ -190,6 +243,98 @@ void GameCanvasLayer::onEnter()
 	_keyboardListener->setEnabled(false);
 	_mouseListener->setEnabled(false);
 	_eventDispatcher->addEventListenerWithSceneGraphPriority(_keyboardListener, this);
+
+	((CanvasScene*)(this->getScene()))->toggleDebugDraw();
+	auto _world = this->getScene()->getPhysicsWorld();
+/*
+	Sprite* box = nullptr;
+//	PhysicsJointDistance* chainJoint_distance = nullptr;
+	int chainLen = 5;
+	Vector<Sprite*> boxes;
+	for (int i = 0; i < chainLen; i++) {
+		box = createBox(Point(500 + 40 * i, 600), Size(20, 10));
+		this->addChild(box);
+		boxes.pushBack(box);
+		if (i == 0)
+		{
+			box->getPhysicsBody()->setDynamic(false);
+		}
+		if (i > 0)
+		{
+			PhysicsJointDistance* chainJoint_distance = PhysicsJointDistance::construct(boxes.at(i - 1)->getPhysicsBody(), boxes.at(i)->getPhysicsBody(), Point(10, 0), Point(-10, 0));
+			chainJoint_distance->createConstraints();
+			log("DIS: %d\n", chainJoint_distance->getDistance());
+			chainJoint_distance->setDistance(-10.f);
+			_world->addJoint(chainJoint_distance);
+		}
+	}*/
+	/*
+#define ARROUND_BALLS_NUM 16
+#define ARROUND_BALLS_RADIUS 0.1f
+#define CENTER_BALL_POS Point(200, 200)
+#define SOFT_BODY_RADIUS 40.0f
+	{
+		auto box1 = createBox(Point(400, 200), Size(100, 100));
+		auto box2 = createBox(Point(300, 300), Size(40, 40));
+		this->addChild(box1);
+		this->addChild(box2);
+		
+		box1->getPhysicsBody()->getShape(0)->setFriction(0.0f);
+		box2->getPhysicsBody()->getShape(0)->setFriction(0.0f);
+		box1->getPhysicsBody()->setDynamic(false);
+		schedule([box1](float d){
+			box1->setRotation(20);
+		},"test");
+		PhysicsJointSpring* joint = PhysicsJointSpring::construct(box1->getPhysicsBody(), box2->getPhysicsBody(), Point::ANCHOR_MIDDLE, Point::ANCHOR_MIDDLE, 1000.0f, 0.8f);
+		_world->addJoint(joint);
+	}*/
+
+	/*
+	// to be finished 
+	{
+		auto centerBall = createBall(CENTER_BALL_POS, SOFT_BODY_RADIUS);
+		centerBall->getPhysicsBody()->setCategoryBitmask(0x02);
+		centerBall->getPhysicsBody()->setContactTestBitmask(0x01);
+		centerBall->getPhysicsBody()->setMass(1.0f / (float)ARROUND_BALLS_NUM);
+		this->addChild(centerBall);
+
+		auto test = 2 * SOFT_BODY_RADIUS*sinf(2 * M_PI / (float)ARROUND_BALLS_NUM);
+		Vector<Sprite*> ballsArround;
+		for (int i = 0; i < ARROUND_BALLS_NUM; i++)
+		{
+			auto angle = 2 * M_PI / ARROUND_BALLS_NUM * i;
+			Point pos = CENTER_BALL_POS + Point::forAngle(angle) * SOFT_BODY_RADIUS;
+			auto ball = createBall(pos, test / 2);
+			ball->getPhysicsBody()->setMoment(PHYSICS_INFINITY);
+			ball->getPhysicsBody()->setMass(1.0f / (float)ARROUND_BALLS_NUM);
+			ball->getPhysicsBody()->setCategoryBitmask(0x02);
+			ball->getPhysicsBody()->setContactTestBitmask(0x01);
+			ball->getPhysicsBody()->getShape(0)->setFriction(1.0f);
+			ball->getPhysicsBody()->getShape(0)->setFriction(0.5f);
+			this->addChild(ball);
+			ballsArround.pushBack(ball);
+
+			auto body = ballsArround.at(i)->getPhysicsBody();
+			PhysicsJointLimit* limitJoint = PhysicsJointLimit::construct(centerBall->getPhysicsBody(), body, Point::forAngle(angle) * SOFT_BODY_RADIUS, Point::ZERO, 0, SOFT_BODY_RADIUS*0.1);
+
+			PhysicsJointSpring* springJoint = PhysicsJointSpring::construct(centerBall->getPhysicsBody(), body, Point::forAngle(angle) * (SOFT_BODY_RADIUS + test / 2 + 4), Point::ZERO, 60, 0.75);
+			springJoint->createConstraints();
+			springJoint->setRestLength(20);
+			_world->addJoint(limitJoint);
+			_world->addJoint(springJoint);
+		}
+
+		for (int i = 0; i < ARROUND_BALLS_NUM; i++)
+		{
+			auto body = ballsArround.at(i)->getPhysicsBody();
+			auto nextArroundBody = ballsArround.at((i + 1) % ARROUND_BALLS_NUM)->getPhysicsBody();
+
+			PhysicsJointLimit* arroundEachLimitJoint = PhysicsJointLimit::construct(body, nextArroundBody, Point::ZERO, Point::ZERO, 0, test);
+			_world->addJoint(arroundEachLimitJoint);
+		}
+
+		centerBall->getPhysicsBody()->applyImpulse(Point(400, 400));
+	}*/
 }
 
 void GameCanvasLayer::onExit()
@@ -239,7 +384,7 @@ void GameCanvasLayer::stopGameSimulation()
 }
 void GameCanvasLayer::removeUnrecognizedSprite(DrawableSprite* target)
 {
-	auto actionBlink = Blink::create(3.0f, 5); 
+	auto actionBlink = Blink::create(1.5f, 3); 
 	auto actionDone = CallFuncN::create([&](Node* node)
 	{
 		this->removeChild(node);
@@ -283,7 +428,7 @@ void GameCanvasLayer::save()
 
 GameLayer* GameCanvasLayer::createGameLayer()
 {
-	return GameLayer::create(this->_drawNodeList, this->_drawNodeResultMap);
+	return GameLayer::create(this->_drawNodeList, this->_drawNodeResultMap, this->getScene());
 }
 
 void GameCanvasLayer::recognize()
@@ -475,6 +620,9 @@ bool GameLayer::init()
 	
 	//GenSpriteResultMap& genSpriteMap = _genSpriteResultMap;
 	// iterate to retrieve recognized sprite
+	InitGeometricPhysicsMask();
+
+
 	priority_queue<RecognizedSprite*, vector<RecognizedSprite*>, RecognizedSpriteLessCmp> lazyQueue;
 	for (auto p = _drawNodeResultMap.begin(); p != _drawNodeResultMap.end(); p++)
 	{
@@ -490,12 +638,14 @@ bool GameLayer::init()
 		auto cmdh = _postCmdHandlers.getCommandHandler(rs->getGeometricType());
 		if (!cmdh._Empty()) cmdh(*rs, _drawNodeList, this, &_genSpriteResultMap);
 	}
+
 	return true;
 }
 
-GameLayer *GameLayer::create(list<DrawableSprite*>& drawNodeList, DrawSpriteResultMap& drawNodeResultMap)
+GameLayer *GameLayer::create(list<DrawableSprite*>& drawNodeList, DrawSpriteResultMap& drawNodeResultMap, Scene* scene)
 {
 	GameLayer *ret = new (std::nothrow) GameLayer(drawNodeList, drawNodeResultMap);
+	ret->setParent(scene);
 	if (ret && ret->init())
 	{
 		ret->autorelease();
@@ -517,6 +667,7 @@ void GameLayer::onEnter()
 {
 	Layer::onEnter();
 	log("game layer on enter");
+
 	_postCmdHandlers.makeJoints(this->getScene()->getPhysicsWorld(), jointsList, _genSpriteResultMap);
 }
 

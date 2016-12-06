@@ -38,6 +38,15 @@ bool PreCommandHandlerFactory::init()
 	this->registerCommandHandler(GT_MESH_TRIANGLE, CC_CALLBACK_4(PreCommandHandlerFactory::handleDefault, this));
 	this->registerCommandHandler(GT_MESH_RECTANGLE, CC_CALLBACK_4(PreCommandHandlerFactory::handleDefault, this));
 	this->registerCommandHandler(GT_MESH_PAWN, CC_CALLBACK_4(PreCommandHandlerFactory::handleDefault, this));
+	this->registerCommandHandler(GT_MESH_GROOVE, CC_CALLBACK_4(PreCommandHandlerFactory::handleDefault, this));
+	this->registerCommandHandler(GT_MESH_SPRING, [](RecognizedSprite& recSprite, list<DrawableSprite*>& drawNodeList, Node* owner, void* udata){
+		DrawSpriteResultMap* rmap = static_cast<DrawSpriteResultMap*>(udata);
+		if (rmap)
+		{
+			recSprite._priority = 4;
+			rmap->insert(pair<DrawableSprite*, RecognizedSprite>(recSprite._drawNode, recSprite));
+		}
+	});
 	this->registerCommandHandler(GT_MESH_PISTAL, [](RecognizedSprite& recSprite, list<DrawableSprite*>& drawNodeList, Node* owner, void* udata){
 		DrawSpriteResultMap* rmap = static_cast<DrawSpriteResultMap*>(udata);
 		if (rmap)
@@ -97,9 +106,10 @@ bool PreCommandHandlerFactory::init()
 					DrawSpriteResultMap* rmap = static_cast<DrawSpriteResultMap*>(udata);
 					if (rmap && rmap->end() != rmap->find(*i))rmap->erase(*i);
 					owner->removeChild(*i);
-					drawNodeList.remove(*i);
+					i = drawNodeList.erase(i);
+					//drawNodeList.remove(*i);
 
-					break;
+					//break;
 				}
 			}
 		}
@@ -139,6 +149,91 @@ bool PostCommandHandlerFactory::init()
 		void* udata)
 	{
 		handleDefaultWithPhysics(recSprite, drawNodeList, owner, udata, makePhysicsBodyAsBox);
+	});
+	this->registerCommandHandler(GT_MESH_GROOVE, [](RecognizedSprite& recSprite,
+		list<DrawableSprite*>& drawNodeList,
+		Node* owner,
+		void* udata)
+	{
+		handleDefaultWithPhysics(recSprite, drawNodeList, owner, udata, makePhysicsBodyAsGroove);
+	});
+	this->registerCommandHandler(GT_MESH_SPRING, [](RecognizedSprite& recSprite,
+		list<DrawableSprite*>& drawNodeList,
+		Node* owner,
+		void* udata)
+	{
+		RecognitionResult& result = recSprite._result;
+		DrawableSprite* ds = recSprite._drawNode;
+		Vec2 position = ds->getShapeCenter();
+		auto sprite = Sprite::createWithTexture(ds->createTexture(), ds->contentRect());
+		sprite->setPosition(position);
+		sprite->setFlippedY(true);
+
+		owner->addChild(sprite);
+		GenSpriteResultMap* rmap = static_cast<GenSpriteResultMap*>(udata);
+		
+		if (rmap)
+		{
+			vector<Sprite*> targets(2);
+			vector<Vec2> anchors(2);
+			int cnt = 0;
+			auto path = ds->getPath();
+			auto first = path.front();
+			auto end = path.back();
+			for (auto p = rmap->begin(); p != rmap->end(); p++)
+			{
+				auto cur = p->second;
+				auto curRect = Rect(Vec2(cur->getPositionX(), cur->getPositionY()) - cur->getContentSize() / 2, cur->getContentSize());
+				if (curRect.containsPoint(first))
+				{ 
+					targets[0] = cur;
+					anchors[0] = (first - cur->getPosition());
+					cnt++;
+				}
+				else if (curRect.containsPoint(end))
+				{
+					targets[1] = cur;
+					anchors[1] = (end - cur->getPosition());
+					cnt++;
+				}
+			}
+			if (cnt == 2)
+			{
+				//targets[0]->getPhysicsBody()->getShape(0)->setFriction(1.0f);
+				//targets[1]->getPhysicsBody()->getShape(0)->setFriction(1.0f);
+
+				auto joint = PhysicsJointSpring::construct(
+					targets[0]->getPhysicsBody(),
+					targets[1]->getPhysicsBody(),
+					anchors[0],
+					anchors[1],
+					30000.0f, 0.5f);
+				joint->createConstraints();
+				auto physicsWorld = owner->getScene()->getPhysicsWorld();
+				physicsWorld->addJoint(joint);
+
+				static int springCnt = 0;
+				char scheduleKey[20];
+				sprintf(scheduleKey, "spring_%d", springCnt);
+				springCnt++;
+				auto originalDistance = EuclideanDistance(targets[0]->getPosition() + anchors[0],
+					targets[1]->getPosition() + anchors[1]);
+				owner->schedule([sprite, targets, anchors, originalDistance](float delta){
+					auto posA = ccpRotateByAngle(targets[0]->getPosition() + anchors[0], 
+						targets[0]->getPosition(), CC_DEGREES_TO_RADIANS(-targets[0]->getRotation()));
+					auto posB = ccpRotateByAngle(targets[1]->getPosition() + anchors[1],
+						targets[1]->getPosition(), CC_DEGREES_TO_RADIANS(-targets[1]->getRotation()));
+					sprite->setPosition((posA + posB) / 2);
+					auto strentchDistance = EuclideanDistance(posA, posB);
+					auto currentDirection = (posB - posA);
+					auto originalDirection = Vec2(0.0f, -1.0f);
+					float rotator = CC_RADIANS_TO_DEGREES(ccpAngle(currentDirection, originalDirection));
+					sprite->setRotation(rotator);
+					sprite->setScaleY(strentchDistance / originalDistance);
+				}, scheduleKey);
+			}
+			//rmap->insert(pair<DrawableSprite*, Sprite*>(recSprite._drawNode, sprite));
+		}
 	});
 	this->registerCommandHandler(GT_MESH_PISTAL, [](RecognizedSprite& recSprite,
 		list<DrawableSprite*>& drawNodeList,
@@ -340,6 +435,10 @@ void PostCommandHandlerFactory::makeJoints(
 				{
 					if (body[0] != nullptr&&body[1] != nullptr&&body[0] != body[1])
 					{
+					//	int collisionMask = ~(body[0]->getCategoryBitmask() | body[1]->getCategoryBitmask());
+						//log("A: %x, B: %x, R: %x", body[0]->getCategoryBitmask(), body[1]->getCategoryBitmask(), collisionMask);
+					//	body[0]->setCollisionBitmask(collisionMask);
+					//	body[1]->setCollisionBitmask(collisionMask);
 						PhysicsJointDistance* joint = PhysicsJointDistance::construct(body[0], body[1], Point::ZERO, Point::ZERO);
 						physicsWorld->addJoint(joint);
 					}

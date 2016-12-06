@@ -73,3 +73,8 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+Classes/scene/HelloWorldScene.cpp
+Classes/scene/HelloWorldScene.h
+Classes/scene/scene.rar
+Classes/scene/Start_Scene.h
+Classes/scene/Start_Scene.cpp

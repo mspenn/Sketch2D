@@ -123,19 +123,24 @@ private:
 class GameLayer : public cocos2d::Layer
 {
 public:
+
 	GameLayer(std::list<DrawableSprite*>&, DrawSpriteResultMap&);
+
 	virtual bool init();
+
 	virtual void onEnter();
+
 	virtual void onExit();
-	static GameLayer *GameLayer::create(list<DrawableSprite*>&, DrawSpriteResultMap&);
+
+	static GameLayer *GameLayer::create(list<DrawableSprite*>&, DrawSpriteResultMap&, cocos2d::Scene*);
 	//CREATE_FUNC(GameLayer);
 //	void setDrawNodeList(std::list<DrawableSprite*>*drawNodeList){ this->_drawNodeList = drawNodeList; }
 //	void setDrawNodeResultMap(DrawSpriteResultMap*drawNodeResultMap){ this->_drawNodeResultMap = drawNodeResultMap; }
 private:
 	std::list<DrawableSprite*>& _drawNodeList;
-	DrawSpriteResultMap& _drawNodeResultMap;
-	GenSpriteResultMap _genSpriteResultMap;
-	PostCommandHandlerFactory _postCmdHandlers;
+	DrawSpriteResultMap&		_drawNodeResultMap;
+	GenSpriteResultMap			_genSpriteResultMap;
+	PostCommandHandlerFactory	_postCmdHandlers;
 };
 
 #endif // __CANVAS_SCENE_H__

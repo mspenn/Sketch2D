@@ -34,13 +34,15 @@ bool PawnController::init()
 		this->setVelocity(Vec2(DEFAULT_SPEED, 0.0f));
 	});
 	bindKeyPressedAction(EventKeyboard::KeyCode::KEY_SPACE, [&](Node* character, float deltaTime){
-		if (character)
-		{
-			character->getPhysicsBody()->applyForce(Vec2(0.0f, 100.0f));
-		}
-		log("DO JUMPING!");
+		ActionInterval* jumpBy = JumpBy::create(4, Vec2::ZERO, 100, 1);
+		Action* jumpAction = Sequence::create(jumpBy, NULL);
+		character->runAction(jumpAction);
+		//this->setIsJumping(true);
+		//this->setVelocity(Vec2(0, 100.0f));
 	});
-
+	bindKeyReleasedAction(EventKeyboard::KeyCode::KEY_SPACE, [&](Node* character, float deltaTime){
+		//this->setIsJumping(false);
+	});
 	return true;
 }
 
@@ -65,4 +67,8 @@ void PawnController::update(float delta)
 		Vec2 pos = _owner->getPosition();
 		_owner->setPosition(pos + this->getVelocity()*delta);
 	}
+	//if (_isJumping)
+	//{
+	//	_owner->getPhysicsBody()->applyForce(Vec2(0.0f, 100.0f));
+	//}
 }

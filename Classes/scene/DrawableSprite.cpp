@@ -17,7 +17,9 @@ DrawableSprite::DrawableSprite()
 , _yMax(0)
 , _reference(nullptr)
 , _brushColor(Color4F::WHITE)
-{}
+{
+	_lineWidth = 3;
+}
 
 /*bool DrawableSprite::init()
 {

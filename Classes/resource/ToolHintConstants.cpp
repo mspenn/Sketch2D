@@ -18,6 +18,7 @@ const char* TOOL_HINT_RECOGNIZE_FAILED[] =
 
 const char* GetToolHintRecognizeSucc(char* bufDst, const char* name, float score)
 {
+	// format name and score with Successful Tool Hint Template randomly
 	int idx = (int)(CCRANDOM_0_1() * (sizeof(TOOL_HINT_RECOGNIZE_SUCC) / sizeof(char*)));
 	sprintf(bufDst, TOOL_HINT_RECOGNIZE_SUCC[idx], name, (int)(score * 100));
 	return bufDst;
@@ -25,6 +26,7 @@ const char* GetToolHintRecognizeSucc(char* bufDst, const char* name, float score
 
 const char* GetToolHintRecognizeFailed(char* bufDst, const char* name, float score)
 {
+	// format name and score with Falied Tool Hint Template randomly
 	int idx = (int)(CCRANDOM_0_1() * (sizeof(TOOL_HINT_RECOGNIZE_FAILED) / sizeof(char*)));
 	sprintf(bufDst, TOOL_HINT_RECOGNIZE_FAILED[idx], name, (int)(score * 100));
 	return bufDst;

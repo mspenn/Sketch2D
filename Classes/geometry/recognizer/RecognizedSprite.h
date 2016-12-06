@@ -6,17 +6,26 @@
 #include "scene/DrawableSprite.h"
 #include "resource/Resources.h"
 
+#define DEFAULT_PRIORITY 5
+
+/**
+ * Recognized Sprite, a drawable sprite recognized by dollar recognizer
+ */
 struct RecognizedSprite
 {
+	// Constructor
 	RecognizedSprite(const DollarRecognizer::RecognitionResult& result, DrawableSprite* drawNode)
 	:_result(result)
 	, _drawNode(drawNode)
-	, _priority(5)
+	, _priority(DEFAULT_PRIORITY)
 	{
 	}
-	DollarRecognizer::RecognitionResult _result;
-	DrawableSprite* _drawNode;
-	std::string getGeometricType() const
+
+	/**
+	 * Get Geometric Type
+	 * @return Geometric type string
+	 */
+	inline std::string getGeometricType() const
 	{
 		if (!_result.name.empty())
 		{
@@ -25,18 +34,51 @@ struct RecognizedSprite
 		}
 		return _result.name; 
 	}
-	bool isType(const std::string& typeName){ return 0 == typeName.compare(this->getGeometricType()); }
-	int _priority;
-	bool operator < (const RecognizedSprite& r){ return this->_priority < r._priority; }
-	bool operator > (const RecognizedSprite& r){ return this->_priority > r._priority; }
+
+	/**
+	 * Check type if equals given type name
+	 * @param typename	given geometric type name
+	 * @return Geometric type string
+	 */
+	inline bool isType(const std::string& typeName) const
+	{
+		return 0 == typeName.compare(this->getGeometricType());
+	}
+
+	/**
+	 * Override Operator <, compare with priority
+	 * @return true if priority small than given one, false otherwise
+	 */
+	inline bool operator < (const RecognizedSprite& r) const
+	{
+		return this->_priority < r._priority;
+	}
+
+	/**
+	 * Override Operator >, compare with priority
+	 * @return true if priority large than given one, false otherwise
+	 */
+	inline bool operator > (const RecognizedSprite& r) const
+	{
+		return this->_priority > r._priority;
+	}
+
+	DollarRecognizer::RecognitionResult _result;	// recognize result given by dollar recognizer
+	DrawableSprite* _drawNode;						// a pointer to a target drawable sprite object
+	int _priority;									// priority
 };
 
 struct RecognizedSpriteLessCmp
-{
-	bool operator()(const RecognizedSprite* a, const RecognizedSprite* b)
+{	
+	/**
+	 * Override Operator (), compare with priority
+	 * Compare function for sort 
+	 * @return true if priority small than given one, false otherwise
+	 */
+	inline bool operator() (const RecognizedSprite* a, const RecognizedSprite* b) const
 	{
 		return a->_priority < b->_priority;
 	}
 };
 
-#endif
+#endif	/* __RECOGNIZED_SPRITE_H__ */

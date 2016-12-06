@@ -12,5 +12,5 @@ Scene* SceneManager::GetCanvasScene(){ return CanvasScene::create(); }
 Scene* SceneManager::GetLogoScene(){ return LogoScene::create(); }
 Scene* SceneManager::GetGameScene(){ return CanvasScene::create(); }
 Scene* SceneManager::GetTrainingScene(){ return ItemManageScene::createScene(); }
-Scene* SceneManager::GetTestScene(){ return HelloWorld::create()->getScene(); }
+Scene* SceneManager::GetTestScene(){ return HelloWorld::createScene(); }
 Scene* SceneManager::GetMenuScene(){ return MenuScene::create(); }

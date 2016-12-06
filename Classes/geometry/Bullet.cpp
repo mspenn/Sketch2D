@@ -28,6 +28,7 @@ bool BulletManager::init()
 	m_bulletCache = Array::create();
 	m_bulletCache->retain();
 
+	// create batch node for bullet and dusty sprites which appear many times
 	m_spriteBatchNode = CCSpriteBatchNode::create(RES_IMAGE(bullet.png));
 	m_spriteBatchNode->setPosition(Vec2::ZERO);
 	this->addChild(m_spriteBatchNode);
@@ -52,12 +53,14 @@ bool BulletManager::onContactBegin(const PhysicsContact& contact)
 {
 	auto a = contact.getShapeA()->getBody()->getNode();
 	auto b = contact.getShapeB()->getBody()->getNode();
+	// if a is a bullet, spawn dusty and remove it
 	if (BULLET_TAG == a->getTag())
 	{
 		spawnBulletDusty(a->getPosition());
 		a->removeFromParent();
 		m_bulletCache->removeObject(a);
 	}
+	// if b is a bullet, spawn dusty and remove it
 	if (BULLET_TAG == b->getTag())
 	{
 		spawnBulletDusty(b->getPosition());
@@ -90,13 +93,16 @@ void BulletManager::updateBulletMoving(float delta)
 
 void BulletManager::spawnNewBullet(Vec2 spawnLocation)
 {
+	// spawn a bullet sprite
+	// and initialize properties
 	Sprite* newBullet = Sprite::createWithTexture(m_spriteBatchNode->getTexture());
 	newBullet->setScale(0.4f);
 	newBullet->setPosition(spawnLocation);
 #define BULLET_RADIUS 12.0f
 	PhysicsBody* physicsBody = PhysicsBody::createCircle(BULLET_RADIUS);
 	physicsBody->setMass(INFINITY);
-	physicsBody->setContactTestBitmask(0xFFFF);
+	// can notify onContact event when hit other sprites
+	physicsBody->setContactTestBitmask(0xFFFFFFFF);
 	newBullet->setPhysicsBody(physicsBody);
 	newBullet->setTag(BULLET_TAG);
 	m_spriteBatchNode->addChild(newBullet);
@@ -105,10 +111,13 @@ void BulletManager::spawnNewBullet(Vec2 spawnLocation)
 
 void BulletManager::spawnBulletDusty(Vec2 spawnLocation)
 {
+	// spawn a dusty sprite
+	// and initialize properties
 	Sprite* newDusty = Sprite::createWithTexture(m_dustyBatchNode->getTexture());
 	newDusty->setScale(0.4f);
 	newDusty->setPosition(spawnLocation);
 	m_dustyBatchNode->addChild(newDusty);
+	// play fade in & out animation
 	auto actionFadeIn = FadeIn::create(0.2f);
 	auto actionFadeOut = FadeOut::create(0.4f);
 	auto actionDone = CallFuncN::create([&](Node* node){node->removeFromParent(); });

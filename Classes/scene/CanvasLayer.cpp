@@ -25,6 +25,7 @@ void CanvasLayer::onMouseDown(EventMouse* event)
 		_startDrawLocation = convertToNodeSpace(event->getLocationInView());
 		_isDrawing = true;
 	}
+	cocos2d::log("X: %f, Y: %f\n", event->getLocationInView().x, event->getLocationInView().y);
 }
 
 void CanvasLayer::onMouseMove(EventMouse* event)

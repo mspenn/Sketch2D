@@ -4,15 +4,11 @@
 #include "cocos2d.h"
 #include "gesture/GeometricRecognizer.h"
 
-/*
-enum NodeType
-{
-	CIRCLE = 0,
-	RECTANGLE,
-	TRIANGLE,
-	SPRING
-};*/
-
+/**
+ * Drawable Sprite
+ * Draw what you like in this sprite
+ * @see cocos2d::DrawNode
+ */
 class DrawableSprite : public cocos2d::DrawNode
 {
 public:
@@ -31,8 +27,24 @@ public:
 	void redraw();
 	void addToPath(cocos2d::Vec2 from, cocos2d::Vec2 to);
 
-	cocos2d::Vec2 getBaryCenter()const{ return _baryCenter; }
-	cocos2d::Vec2 getShapeCenter() const{ return cocos2d::Vec2((_xMin + _xMax) / 2, (_yMin + _yMax) / 2); }
+	/**
+	 * Get Bary Center/Centroid
+	 * The average of all the points
+	 */
+	cocos2d::Vec2 getBaryCenter() const
+	{
+		return _baryCenter;
+	}
+
+	/**
+	* Get Shape Center
+	* The centroid of the rectangle container
+	*/
+	cocos2d::Vec2 getShapeCenter() const
+	{
+		return cocos2d::Vec2((_xMin + _xMax) / 2, (_yMin + _yMax) / 2);
+	}
+
 	const std::vector<cocos2d::Vec2>& getPath() const{ return _path; }
 
 	cocos2d::Texture2D* createTexture();
@@ -52,7 +64,7 @@ public:
 	static DrawableSprite* createWithMultiStrokeGesture(const DollarRecognizer::MultiStrokeGesture&);
 
 private:
-	
+
 	DollarRecognizer::GeometricRecognizer* _geoRecognizer;
 	cocos2d::Vec2 _baryCenter;
 	std::vector<cocos2d::Vec2> _path;
