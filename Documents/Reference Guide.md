@@ -2,7 +2,7 @@
 
 | Contributions |                                          |
 | ------------- | ---------------------------------------- |
-| Development   | Zak Penn - microsmadiopenn@gmail.com     |
+| Development   | Zak Penn - [microsmadiopenn@gmail.com](mailto://microsmadiopenn@gmail.com)     |
 |               | Ziseon - [emengjzs@163.com](mailto://emengjzs@163.com) |
 | Document      | Ziseon - [emengjzs@163.com](mailto://emengjzs@163.com) |
 
