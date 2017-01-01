@@ -8,8 +8,6 @@ A sketch draw and animate it in a physics world!
 + Cocos2d-x 3.10 [Physics Engine: Chipmunks]
 
 ## Introduction
-![Sketch2D-Intro]()
-
 <iframe height=498 width=510 src='http://player.youku.com/embed/XMTY5OTQyNjM2NA==' frameborder=0 'allowfullscreen'></iframe>
 
 
