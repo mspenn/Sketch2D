@@ -10,7 +10,7 @@ A sketch draw and animate it in a physics world!
 ## Introduction
 [View Video In Youku](http://v.youku.com/v_show/id_XMTg5NDY0NTg4MA==.html#paction)
 
-![Sketch2D-Intro](https://github.com/mspenn/Sketch2D/blob/master/Screenshots/Sketch2D-Intro.jpg)(http://player.youku.com/player.php/sid/XMTg5NDY0NTg4MA==/v.swf)
+[![Sketch2D-Intro](https://github.com/mspenn/Sketch2D/blob/master/Screenshots/Sketch2D-Intro.jpg)](http://player.youku.com/player.php/sid/XMTg5NDY0NTg4MA==/v.swf)
 
 
 ## Screenshots
